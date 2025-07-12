@@ -11,7 +11,7 @@
       },
       "oauth": {
         "title": "OAuth2 Authorization",
-        "description": "Please authorize the application by visiting the URL below and then paste the authorization response here.\n\n**Authorization URL:** {auth_url}\n\n**Client ID:** {client_id}",
+        "description": "Please authorize the application by visiting this URL:\n\n**{auth_url}**\n\nAfter authorization, you'll be redirected to a URL like:\n`https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`\n\nCopy the entire URL and paste it below.",
         "data": {
           "authorization_response": "Authorization Response"
         }

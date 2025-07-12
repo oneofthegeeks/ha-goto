@@ -138,7 +138,10 @@ Copy the entire URL and paste it below.
         
         return self.async_show_form(
             step_id="oauth",
-            description=description,
+            description_placeholders={
+                "auth_url": auth_url,
+                "client_id": self.client_id,
+            },
             data_schema=vol.Schema(
                 {
                     vol.Required("authorization_response"): str,
