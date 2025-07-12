@@ -16,6 +16,8 @@ PLATFORMS: list[Platform] = []
 # Import config flow
 from . import config_flow
 
+_LOGGER.info("GoTo SMS integration loaded")
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up GoTo SMS from a config entry."""
@@ -38,6 +40,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Set up the GoTo SMS component."""
+    _LOGGER.info("Setting up GoTo SMS integration")
     hass.data.setdefault(DOMAIN, {})
     
     # Register the notification service
@@ -47,6 +50,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         lambda service: _handle_send_sms(hass, service),
     )
     
+    _LOGGER.info("GoTo SMS integration setup complete")
     return True
 
 
