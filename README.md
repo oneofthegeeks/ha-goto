@@ -1,6 +1,6 @@
 # GoTo SMS Integration for Home Assistant
 
-[![Test Integration](https://github.com/your-username/ha-goto/workflows/Test%20Integration/badge.svg)](https://github.com/your-username/ha-goto/actions)
+[![Test Integration](https://github.com/oneofthegeeks/ha-goto/workflows/Test%20Integration/badge.svg)](https://github.com/oneofthegeeks/ha-goto/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A custom Home Assistant integration that allows you to send SMS messages using the GoTo Connect API.
@@ -25,7 +25,7 @@ A custom Home Assistant integration that allows you to send SMS messages using t
 
 ```bash
 cd /path/to/homeassistant/config/custom_components
-git clone https://github.com/your-username/ha-goto.git
+git clone https://github.com/oneofthegeeks/ha-goto.git
 cp -r ha-goto/custom_components/goto_sms ./
 rm -rf ha-goto
 ```
@@ -187,7 +187,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For issues and questions:
-- [Create an issue](https://github.com/your-username/ha-goto/issues) on GitHub
+- [Create an issue](https://github.com/oneofthegeeks/ha-goto/issues) on GitHub
 - Check the [Home Assistant community forums](https://community.home-assistant.io/)
 - Review the logs for detailed error information
 
