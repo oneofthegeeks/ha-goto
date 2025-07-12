@@ -12,6 +12,9 @@ from oauthlib.oauth2.rfc6749.errors import TokenExpiredError
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
+# Allow HTTP for development (disable SSL verification warnings)
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
 from .const import (
     OAUTH2_AUTHORIZE_URL,
     OAUTH2_TOKEN_URL,
@@ -126,6 +129,10 @@ class GoToOAuth2Manager:
             scope=OAUTH2_SCOPE,
         )
         
+        # Allow HTTP for development (disable SSL verification warnings)
+        import os
+        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+        
         auth_url = auth_session.authorization_url(OAUTH2_AUTHORIZE_URL)[0]
         _LOGGER.info("Generated authorization URL: %s", auth_url)
         return auth_url
@@ -133,6 +140,10 @@ class GoToOAuth2Manager:
     def fetch_token(self, authorization_response: str) -> bool:
         """Fetch tokens using authorization response."""
         try:
+            # Allow HTTP for development (disable SSL verification warnings)
+            import os
+            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+            
             token = self.session.fetch_token(
                 OAUTH2_TOKEN_URL,
                 authorization_response=authorization_response,
@@ -159,6 +170,10 @@ class GoToOAuth2Manager:
             if CONF_REFRESH_TOKEN not in self._tokens:
                 _LOGGER.error("No refresh token available")
                 return False
+
+            # Allow HTTP for development (disable SSL verification warnings)
+            import os
+            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
             extra = {
                 "client_id": self.client_id,
