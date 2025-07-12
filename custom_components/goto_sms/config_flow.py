@@ -119,18 +119,26 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.info("Generated authorization URL: %s", auth_url)
         except Exception as e:
             _LOGGER.error("Failed to generate authorization URL: %s", e)
-            return self.async_show_form(
-                step_id="user",
-                errors={"base": "invalid_credentials"},
-            )
+            # Create a fallback URL manually
+            auth_url = f"https://authentication.logmeininc.com/oauth/authorize?client_id={self.client_id}&redirect_uri=https://home-assistant.io/auth/callback&response_type=code&scope=sms:send"
+            _LOGGER.info("Using fallback authorization URL: %s", auth_url)
 
         _LOGGER.info("Showing OAuth form with auth_url: %s", auth_url)
+        # Create a simpler form that shows the URL directly
+        description = f"""
+Please authorize the application by visiting this URL:
+
+**{auth_url}**
+
+After authorization, you'll be redirected to a URL like:
+`https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`
+
+Copy the entire URL and paste it below.
+        """
+        
         return self.async_show_form(
             step_id="oauth",
-            description_placeholders={
-                "auth_url": auth_url,
-                "client_id": self.client_id,
-            },
+            description=description,
             data_schema=vol.Schema(
                 {
                     vol.Required("authorization_response"): str,
