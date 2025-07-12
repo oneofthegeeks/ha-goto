@@ -30,6 +30,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         """Initialize the config flow."""
+        _LOGGER.info("Initializing GoTo SMS config flow")
         self.oauth_manager: Optional[GoToOAuth2Manager] = None
         self.client_id: Optional[str] = None
         self.client_secret: Optional[str] = None
@@ -38,6 +39,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
         """Handle the initial step."""
+        _LOGGER.info("GoTo SMS config flow user step called, user_input: %s", user_input is not None)
         errors = {}
 
         if user_input is not None:
