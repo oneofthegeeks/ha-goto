@@ -28,14 +28,22 @@ _LOGGER = logging.getLogger(__name__)
 class GoToOAuth2Manager:
     """Manages OAuth2 tokens for GoTo Connect API."""
 
-    def __init__(self, hass: HomeAssistant, config_entry: ConfigEntry):
+    def __init__(self, hass: HomeAssistant, config_entry: Optional[ConfigEntry] = None):
         """Initialize the OAuth2 manager."""
         self.hass = hass
         self.config_entry = config_entry
-        self.client_id = config_entry.data[CONF_CLIENT_ID]
-        self.client_secret = config_entry.data[CONF_CLIENT_SECRET]
+        
+        # Handle both config entry and manual credential setting
+        if config_entry is not None:
+            self.client_id = config_entry.data[CONF_CLIENT_ID]
+            self.client_secret = config_entry.data[CONF_CLIENT_SECRET]
+        else:
+            # For config flow setup, credentials will be set manually
+            self.client_id = None
+            self.client_secret = None
+        # Initialize session with client_id (will be set later if None)
         self.session = OAuth2Session(
-            self.client_id,
+            self.client_id or "temp",  # Use temp placeholder if None
             redirect_uri="https://home-assistant.io/auth/callback",
             scope=OAUTH2_SCOPE,
         )
@@ -44,6 +52,10 @@ class GoToOAuth2Manager:
     def load_tokens(self) -> bool:
         """Load tokens from config entry."""
         try:
+            if self.config_entry is None:
+                _LOGGER.warning("No config entry available for token loading")
+                return False
+                
             tokens = self.config_entry.data.get("tokens", {})
             if not tokens:
                 _LOGGER.warning("No tokens found in config entry")
@@ -65,6 +77,10 @@ class GoToOAuth2Manager:
     def save_tokens(self) -> bool:
         """Save tokens to config entry."""
         try:
+            if self.config_entry is None:
+                _LOGGER.warning("No config entry available for token saving")
+                return False
+                
             # Update the config entry with new tokens
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
