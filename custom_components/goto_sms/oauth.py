@@ -117,13 +117,18 @@ class GoToOAuth2Manager:
         if not self.client_id:
             raise ValueError("Client ID not set")
         
+        _LOGGER.info("Creating authorization URL with client_id: %s", self.client_id)
+        
         # Create a new session with the correct client_id for authorization
         auth_session = OAuth2Session(
             self.client_id,
             redirect_uri="https://home-assistant.io/auth/callback",
             scope=OAUTH2_SCOPE,
         )
-        return auth_session.authorization_url(OAUTH2_AUTHORIZE_URL)[0]
+        
+        auth_url = auth_session.authorization_url(OAUTH2_AUTHORIZE_URL)[0]
+        _LOGGER.info("Generated authorization URL: %s", auth_url)
+        return auth_url
 
     def fetch_token(self, authorization_response: str) -> bool:
         """Fetch tokens using authorization response."""
