@@ -1,0 +1,20 @@
+goto_sms:
+  notify:
+    name: "GoTo SMS"
+    description: "Send SMS messages via GoTo Connect API"
+    fields:
+      message:
+        name: "Message"
+        description: "The SMS message to send"
+        required: true
+        example: "Hello from Home Assistant!"
+      target:
+        name: "Target"
+        description: "The phone number to send the SMS to (with country code)"
+        required: true
+        example: "+1234567890"
+      sender_id:
+        name: "Sender ID"
+        description: "Optional sender ID for the SMS (defaults to 'HomeAssistant')"
+        required: false
+        example: "MyHome" 

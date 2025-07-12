@@ -1,0 +1,45 @@
+# Example configuration.yaml entry for GoTo SMS integration
+# This is for reference only - the integration is configured through the UI
+
+# Enable debug logging for the integration (optional)
+logger:
+  default: info
+  logs:
+    custom_components.goto_sms: debug
+
+# Example automation using the GoTo SMS service
+automation:
+  - alias: "Send SMS when door opens"
+    trigger:
+      platform: state
+      entity_id: binary_sensor.front_door
+      to: "on"
+    action:
+      - service: notify.goto_sms
+        data:
+          message: "Front door has been opened!"
+          target: "+1234567890"
+          sender_id: "HomeSecurity"
+
+  - alias: "Send SMS when temperature is too high"
+    trigger:
+      platform: numeric_state
+      entity_id: sensor.living_room_temperature
+      above: 80
+    action:
+      - service: notify.goto_sms
+        data:
+          message: "Temperature alert: Living room is {{ states('sensor.living_room_temperature') }}°F"
+          target: "+1234567890"
+          sender_id: "ClimateControl"
+
+# Example script for testing
+script:
+  test_goto_sms:
+    alias: "Test GoTo SMS"
+    sequence:
+      - service: notify.goto_sms
+        data:
+          message: "This is a test message from Home Assistant"
+          target: "+1234567890"
+          sender_id: "TestSystem" 
