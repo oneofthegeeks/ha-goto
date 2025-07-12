@@ -114,7 +114,16 @@ class GoToOAuth2Manager:
 
     def get_authorization_url(self) -> str:
         """Get the authorization URL for OAuth2 flow."""
-        return self.session.authorization_url(OAUTH2_AUTHORIZE_URL)[0]
+        if not self.client_id:
+            raise ValueError("Client ID not set")
+        
+        # Create a new session with the correct client_id for authorization
+        auth_session = OAuth2Session(
+            self.client_id,
+            redirect_uri="https://home-assistant.io/auth/callback",
+            scope=OAUTH2_SCOPE,
+        )
+        return auth_session.authorization_url(OAUTH2_AUTHORIZE_URL)[0]
 
     def fetch_token(self, authorization_response: str) -> bool:
         """Fetch tokens using authorization response."""
