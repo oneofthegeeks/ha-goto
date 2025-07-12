@@ -108,7 +108,15 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
         # Get the authorization URL
-        auth_url = self.oauth_manager.get_authorization_url()
+        try:
+            auth_url = self.oauth_manager.get_authorization_url()
+            _LOGGER.info("Generated authorization URL: %s", auth_url)
+        except Exception as e:
+            _LOGGER.error("Failed to generate authorization URL: %s", e)
+            return self.async_show_form(
+                step_id="user",
+                errors={"base": "invalid_credentials"},
+            )
 
         return self.async_show_form(
             step_id="oauth",
