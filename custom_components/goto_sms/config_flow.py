@@ -46,9 +46,14 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Validate credentials by attempting to create OAuth manager
             try:
+                # For config flow, we need to create a temporary OAuth manager
+                # that doesn't require a config entry yet
                 self.oauth_manager = GoToOAuth2Manager(
-                    self.client_id, self.client_secret
+                    self.hass, None  # No config entry during setup
                 )
+                # Set the credentials manually for the setup process
+                self.oauth_manager.client_id = self.client_id
+                self.oauth_manager.client_secret = self.client_secret
                 return await self.async_step_oauth()
             except Exception as e:
                 _LOGGER.error("Failed to initialize OAuth manager: %s", e)
