@@ -46,6 +46,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Validate credentials by attempting to create OAuth manager
             try:
+                _LOGGER.info("Creating OAuth manager with client_id: %s", self.client_id)
                 # For config flow, we need to create a temporary OAuth manager
                 # that doesn't require a config entry yet
                 self.oauth_manager = GoToOAuth2Manager(
@@ -54,6 +55,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Set the credentials manually for the setup process
                 self.oauth_manager.client_id = self.client_id
                 self.oauth_manager.client_secret = self.client_secret
+                _LOGGER.info("OAuth manager created successfully")
                 return await self.async_step_oauth()
             except Exception as e:
                 _LOGGER.error("Failed to initialize OAuth manager: %s", e)
@@ -74,6 +76,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
         """Handle the OAuth2 authorization step."""
+        _LOGGER.info("Entering OAuth step, user_input: %s", user_input is not None)
         if user_input is not None:
             # Handle the OAuth2 callback
             try:
@@ -109,6 +112,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Get the authorization URL
         try:
+            _LOGGER.info("About to generate authorization URL")
             auth_url = self.oauth_manager.get_authorization_url()
             _LOGGER.info("Generated authorization URL: %s", auth_url)
         except Exception as e:
@@ -118,6 +122,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors={"base": "invalid_credentials"},
             )
 
+        _LOGGER.info("Showing OAuth form with auth_url: %s", auth_url)
         return self.async_show_form(
             step_id="oauth",
             description_placeholders={
