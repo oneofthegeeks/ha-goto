@@ -1,0 +1,28 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "GoTo SMS Configuration",
+        "description": "Enter your GoTo Connect OAuth2 credentials to enable SMS functionality.",
+        "data": {
+          "client_id": "Client ID",
+          "client_secret": "Client Secret"
+        }
+      },
+      "oauth": {
+        "title": "OAuth2 Authorization",
+        "description": "Please authorize the application by visiting the URL below and then paste the authorization response here.\n\n**Authorization URL:** {auth_url}\n\n**Client ID:** {client_id}",
+        "data": {
+          "authorization_response": "Authorization Response"
+        }
+      }
+    },
+    "error": {
+      "invalid_credentials": "Invalid credentials provided",
+      "oauth_failed": "OAuth2 authorization failed"
+    },
+    "abort": {
+      "already_configured": "GoTo SMS is already configured"
+    }
+  }
+} 
