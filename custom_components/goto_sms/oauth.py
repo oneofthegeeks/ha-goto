@@ -22,6 +22,8 @@ from .const import (
     CONF_ACCESS_TOKEN,
     CONF_REFRESH_TOKEN,
     CONF_TOKEN_EXPIRES_AT,
+    CONF_CLIENT_ID,
+    CONF_CLIENT_SECRET,
     DOMAIN,
 )
 
@@ -140,25 +142,62 @@ class GoToOAuth2Manager:
     def fetch_token(self, authorization_response: str) -> bool:
         """Fetch tokens using authorization response."""
         try:
-            # Allow HTTP for development (disable SSL verification warnings)
-            import os
-            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+            import base64
+            import urllib.parse
             
-            token = self.session.fetch_token(
+            # Extract the authorization code from the response URL
+            parsed_url = urllib.parse.urlparse(authorization_response)
+            query_params = urllib.parse.parse_qs(parsed_url.query)
+            code = query_params.get('code', [None])[0]
+            
+            if not code:
+                _LOGGER.error("No authorization code found in response")
+                return False
+            
+            # Create Basic auth header with client credentials
+            credentials = f"{self.client_id}:{self.client_secret}"
+            encoded_credentials = base64.b64encode(credentials.encode()).decode()
+            
+            # Prepare the request data
+            data = {
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': 'https://home-assistant.io/auth/callback'
+            }
+            
+            # Make the token request
+            response = requests.post(
                 OAUTH2_TOKEN_URL,
-                authorization_response=authorization_response,
-                client_secret=self.client_secret,
+                headers={
+                    'Authorization': f'Basic {encoded_credentials}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                data=data,
+                timeout=30
             )
             
+            if response.status_code != 200:
+                _LOGGER.error("Token request failed: %d - %s", response.status_code, response.text)
+                return False
+            
+            token_data = response.json()
+            
             self._tokens = {
-                CONF_ACCESS_TOKEN: token["access_token"],
-                CONF_REFRESH_TOKEN: token["refresh_token"],
+                CONF_ACCESS_TOKEN: token_data["access_token"],
+                CONF_REFRESH_TOKEN: token_data["refresh_token"],
                 CONF_TOKEN_EXPIRES_AT: (
-                    datetime.now() + timedelta(seconds=token["expires_in"])
+                    datetime.now() + timedelta(seconds=token_data["expires_in"])
                 ).isoformat(),
             }
             
-            return self.save_tokens()
+            # Only try to save tokens if we have a config entry
+            if self.config_entry is not None:
+                return self.save_tokens()
+            else:
+                # During setup, just store tokens in memory
+                _LOGGER.info("Tokens fetched successfully during setup")
+                return True
 
         except Exception as e:
             _LOGGER.error("Failed to fetch tokens: %s", e)
@@ -171,26 +210,41 @@ class GoToOAuth2Manager:
                 _LOGGER.error("No refresh token available")
                 return False
 
-            # Allow HTTP for development (disable SSL verification warnings)
-            import os
-            os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-
-            extra = {
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
+            import base64
+            
+            # Create Basic auth header with client credentials
+            credentials = f"{self.client_id}:{self.client_secret}"
+            encoded_credentials = base64.b64encode(credentials.encode()).decode()
+            
+            # Prepare the request data
+            data = {
+                'grant_type': 'refresh_token',
+                'refresh_token': self._tokens[CONF_REFRESH_TOKEN]
             }
-
-            token = self.session.refresh_token(
+            
+            # Make the token refresh request
+            response = requests.post(
                 OAUTH2_TOKEN_URL,
-                refresh_token=self._tokens[CONF_REFRESH_TOKEN],
-                **extra,
+                headers={
+                    'Authorization': f'Basic {encoded_credentials}',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                data=data,
+                timeout=30
             )
+            
+            if response.status_code != 200:
+                _LOGGER.error("Token refresh failed: %d - %s", response.status_code, response.text)
+                return False
+            
+            token_data = response.json()
 
             self._tokens = {
-                CONF_ACCESS_TOKEN: token["access_token"],
-                CONF_REFRESH_TOKEN: token.get("refresh_token", self._tokens[CONF_REFRESH_TOKEN]),
+                CONF_ACCESS_TOKEN: token_data["access_token"],
+                CONF_REFRESH_TOKEN: token_data.get("refresh_token", self._tokens[CONF_REFRESH_TOKEN]),
                 CONF_TOKEN_EXPIRES_AT: (
-                    datetime.now() + timedelta(seconds=token["expires_in"])
+                    datetime.now() + timedelta(seconds=token_data["expires_in"])
                 ).isoformat(),
             }
 

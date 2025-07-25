@@ -91,13 +91,16 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
                 if success:
-                    # Create the config entry
+                    # Create the config entry with tokens
+                    config_data = {
+                        CONF_CLIENT_ID: self.client_id,
+                        CONF_CLIENT_SECRET: self.client_secret,
+                        "tokens": self.oauth_manager._tokens,  # Include the tokens
+                    }
+                    
                     return self.async_create_entry(
                         title="GoTo SMS",
-                        data={
-                            CONF_CLIENT_ID: self.client_id,
-                            CONF_CLIENT_SECRET: self.client_secret,
-                        },
+                        data=config_data,
                     )
                 else:
                     return self.async_show_form(
