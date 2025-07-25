@@ -61,12 +61,17 @@ class GoToOAuth2Manager:
                 _LOGGER.warning("No config entry available for token loading")
                 return False
                 
+            _LOGGER.info("Loading tokens from config entry. Config entry data: %s", self.config_entry.data)
+            
             tokens = self.config_entry.data.get("tokens", {})
+            _LOGGER.info("Found tokens in config entry: %s", tokens)
+            
             if not tokens:
                 _LOGGER.warning("No tokens found in config entry")
                 return False
 
             self._tokens = tokens
+            _LOGGER.info("Tokens loaded into memory: %s", self._tokens)
 
             if not self._validate_tokens():
                 _LOGGER.warning("Invalid or expired tokens found")
@@ -90,32 +95,60 @@ class GoToOAuth2Manager:
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
             
+            # Schedule the update in the main event loop (non-blocking)
+            self.hass.async_create_task(
+                self._update_config_entry_async(data)
+            )
+            _LOGGER.info("Tokens scheduled for saving")
+            return True
+        except Exception as e:
+            _LOGGER.error("Failed to schedule token saving: %s", e)
+            return False
+
+    async def _update_config_entry_async(self, data):
+        """Update config entry asynchronously."""
+        try:
             self.hass.config_entries.async_update_entry(
                 self.config_entry, data=data
             )
-            _LOGGER.info("Tokens saved successfully")
-            return True
         except Exception as e:
-            _LOGGER.error("Failed to save tokens: %s", e)
-            return False
+            _LOGGER.error("Failed to update config entry: %s", e)
 
     def _validate_tokens(self) -> bool:
         """Validate that tokens exist and are not expired."""
         required_keys = [CONF_ACCESS_TOKEN, CONF_REFRESH_TOKEN, CONF_TOKEN_EXPIRES_AT]
         
+        _LOGGER.info("Validating tokens. Available keys: %s", list(self._tokens.keys()))
+        
         if not all(key in self._tokens for key in required_keys):
+            missing_keys = [key for key in required_keys if key not in self._tokens]
+            _LOGGER.info("Missing required token keys: %s", missing_keys)
             return False
 
         expires_at = self._tokens.get(CONF_TOKEN_EXPIRES_AT)
         if not expires_at:
+            _LOGGER.info("No expiration time found")
             return False
 
         # Check if token expires within the next 5 minutes
-        expiry_time = datetime.fromisoformat(expires_at)
-        if datetime.now() + timedelta(minutes=5) >= expiry_time:
-            return False
+        try:
+            expiry_time = datetime.fromisoformat(expires_at)
+            current_time = datetime.now()
+            time_until_expiry = expiry_time - current_time
+            
+            _LOGGER.info("Token validation - expires_at: %s, current_time: %s, time_until_expiry: %s", 
+                         expires_at, current_time, time_until_expiry)
+            
+            # Token is valid if it expires more than 5 minutes from now
+            if time_until_expiry <= timedelta(minutes=5):
+                _LOGGER.info("Token expires within 5 minutes - will refresh")
+                return False
 
-        return True
+            _LOGGER.info("Token is valid")
+            return True
+        except Exception as e:
+            _LOGGER.error("Error parsing token expiration time: %s", e)
+            return False
 
     def get_authorization_url(self) -> str:
         """Get the authorization URL for OAuth2 flow."""
@@ -256,23 +289,32 @@ class GoToOAuth2Manager:
 
     def get_valid_token(self) -> Optional[str]:
         """Get a valid access token, refreshing if necessary."""
+        _LOGGER.info("Getting valid token. Current tokens: %s", self._tokens)
+        
         if not self._tokens:
+            _LOGGER.info("No tokens in memory, attempting to load from config entry")
             if not self.load_tokens():
+                _LOGGER.error("Failed to load tokens from config entry")
                 return None
 
         if not self._validate_tokens():
             _LOGGER.info("Token expired, attempting refresh")
             if not self.refresh_tokens():
+                _LOGGER.error("Failed to refresh tokens")
                 return None
 
-        return self._tokens.get(CONF_ACCESS_TOKEN)
+        token = self._tokens.get(CONF_ACCESS_TOKEN)
+        _LOGGER.info("Returning token: %s", "present" if token else "none")
+        return token
 
     def get_headers(self) -> Dict[str, str]:
         """Get headers with valid access token."""
         token = self.get_valid_token()
         if not token:
+            _LOGGER.error("No valid token available. Tokens: %s", self._tokens)
             return {}
         
+        _LOGGER.info("Got valid token, creating headers")
         return {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",

@@ -3,6 +3,7 @@
 import logging
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -11,7 +12,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = []
+PLATFORMS: list[Platform] = [Platform.NOTIFY]
 
 # Import config flow
 from . import config_flow
@@ -24,38 +25,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    # Register the notification service
-    from .notify import get_service
-    
-    notify_service = get_service(hass, {})
-    if notify_service:
-        async def handle_sms_service(call):
-            """Handle the SMS service call."""
+    # Register the SMS service with proper schema
+    async def handle_send_sms(call):
+        """Handle the send SMS service call."""
+        from .notify import get_service
+        
+        notify_service = get_service(hass, {})
+        if notify_service:
             message = call.data.get("message")
             target = call.data.get("target")
             sender_id = call.data.get("sender_id")
             
-            # Validate required parameters
-            if not message:
-                _LOGGER.error("No message provided")
-                return
-                
-            if not target:
-                _LOGGER.error("No target phone number provided")
-                return
-                
-            if not sender_id:
-                _LOGGER.error("No sender_id (GoTo phone number) provided. You must specify the GoTo phone number to send from.")
-                return
-            
             if notify_service:
-                await notify_service.async_send_message(message, target=target, sender_id=sender_id)
-        
-        hass.services.async_register(
-            "notify",
-            "goto_sms",
-            handle_sms_service,
-        )
+                await notify_service.async_send_message_service(call)
+
+    # Register the service with schema for form interface
+    hass.services.async_register(
+        DOMAIN,
+        "send_sms",
+        handle_send_sms,
+    )
 
     return True
 
