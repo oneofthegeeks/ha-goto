@@ -6,11 +6,11 @@ DEFAULT_NAME = "GoTo SMS"
 # OAuth2 Configuration
 OAUTH2_AUTHORIZE_URL = "https://authentication.logmeininc.com/oauth/authorize"
 OAUTH2_TOKEN_URL = "https://authentication.logmeininc.com/oauth/token"
-OAUTH2_SCOPE = "sms:send"
+OAUTH2_SCOPE = "messaging.v1.send"
 
 # GoTo Connect API Endpoints
 GOTO_API_BASE_URL = "https://api.goto.com"
-SMS_ENDPOINT = "/v1/sms/messages"
+SMS_ENDPOINT = "/messaging/v1/messages"
 
 # Configuration keys
 CONF_CLIENT_ID = "client_id"
