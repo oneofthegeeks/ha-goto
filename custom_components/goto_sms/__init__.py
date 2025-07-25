@@ -24,8 +24,38 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    # Set up platforms
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # Register the notification service
+    from .notify import get_service
+    
+    notify_service = get_service(hass, {})
+    if notify_service:
+        async def handle_sms_service(call):
+            """Handle the SMS service call."""
+            message = call.data.get("message")
+            target = call.data.get("target")
+            sender_id = call.data.get("sender_id")
+            
+            # Validate required parameters
+            if not message:
+                _LOGGER.error("No message provided")
+                return
+                
+            if not target:
+                _LOGGER.error("No target phone number provided")
+                return
+                
+            if not sender_id:
+                _LOGGER.error("No sender_id (GoTo phone number) provided. You must specify the GoTo phone number to send from.")
+                return
+            
+            if notify_service:
+                await notify_service.async_send_message(message, target=target, sender_id=sender_id)
+        
+        hass.services.async_register(
+            "notify",
+            "goto_sms",
+            handle_sms_service,
+        )
 
     return True
 
@@ -43,24 +73,8 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     _LOGGER.info("Setting up GoTo SMS integration")
     hass.data.setdefault(DOMAIN, {})
     
-    # Register the notification service
-    hass.services.async_register(
-        DOMAIN,
-        "send_sms",
-        lambda service: _handle_send_sms(hass, service),
-    )
+    # The notification service will be registered by the notify platform
+    # when the integration is loaded via config entry
     
     _LOGGER.info("GoTo SMS integration setup complete")
-    return True
-
-
-def _handle_send_sms(hass: HomeAssistant, service) -> None:
-    """Handle the send_sms service call."""
-    from .notify import get_service
-    
-    notify_service = get_service(hass, {})
-    notify_service.async_send_message(
-        message=service.data.get("message"),
-        target=service.data.get("target"),
-        sender_id=service.data.get("sender_id"),
-    ) 
+    return True 

@@ -54,8 +54,12 @@ class GoToSMSNotificationService(BaseNotificationService):
 
     async def async_send_message(self, message: str, **kwargs: Any) -> None:
         """Send SMS message."""
+        _LOGGER.info("Received SMS request - message: %s, kwargs: %s", message, kwargs)
+        
         target = kwargs.get(ATTR_TARGET)
         sender_id = kwargs.get(ATTR_SENDER_ID, DEFAULT_SENDER_ID)
+
+        _LOGGER.info("Extracted target: %s, sender_id: %s", target, sender_id)
 
         if not target:
             _LOGGER.error("No target phone number provided")
@@ -78,11 +82,11 @@ class GoToSMSNotificationService(BaseNotificationService):
                 _LOGGER.error("Failed to get valid authentication headers")
                 return
 
-            # Prepare the SMS payload
+            # Prepare the SMS payload according to GoTo Connect API specification
             payload = {
-                "to": target,
-                "message": message,
-                "from": sender_id,
+                "ownerPhoneNumber": sender_id,  # The GoTo phone number to send from
+                "contactPhoneNumbers": [target],  # List of phone numbers to send to
+                "body": message,  # The message content
             }
 
             url = f"{GOTO_API_BASE_URL}{SMS_ENDPOINT}"
