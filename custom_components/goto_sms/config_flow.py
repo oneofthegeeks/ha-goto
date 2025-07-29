@@ -132,7 +132,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 f"https://authentication.logmeininc.com/oauth/authorize"
                 f"?client_id={self.client_id}"
                 f"&redirect_uri=https://home-assistant.io/auth/callback"
-                f"&response_type=code&scope=sms:send"
+                f"&response_type=code&scope={OAUTH2_SCOPE}"
             )
             _LOGGER.info("Using fallback authorization URL: %s", auth_url)
 
@@ -147,6 +147,8 @@ After authorization, you'll be redirected to a URL like:
 `https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`
 
 Copy the entire URL and paste it below.
+
+**Note:** If you only see an authorization code (without the full URL), you can paste just the code.
         """
 
         return self.async_show_form(
