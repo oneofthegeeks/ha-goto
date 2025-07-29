@@ -36,10 +36,10 @@ def get_service(
     if not config_entries:
         _LOGGER.error("No GoTo SMS configuration found")
         return None
-    
+
     config_entry = config_entries[0]  # Use the first config entry
     oauth_manager = GoToOAuth2Manager(hass, config_entry)
-    
+
     return GoToSMSNotificationService(hass, oauth_manager)
 
 
@@ -54,7 +54,7 @@ class GoToSMSNotificationService(BaseNotificationService):
     async def async_send_message(self, message: str, **kwargs: Any) -> None:
         """Send SMS message."""
         _LOGGER.info("Received SMS request - message: %s, kwargs: %s", message, kwargs)
-        
+
         target = kwargs.get(ATTR_TARGET)
         sender_id = kwargs.get(ATTR_SENDER_ID)
 
@@ -93,9 +93,9 @@ class GoToSMSNotificationService(BaseNotificationService):
             }
 
             url = f"{GOTO_API_BASE_URL}{SMS_ENDPOINT}"
-            
+
             _LOGGER.info("Sending SMS to %s: %s", target, message[:50] + "..." if len(message) > 50 else message)
-            
+
             response = requests.post(
                 url,
                 headers=headers,
@@ -120,7 +120,7 @@ class GoToSMSNotificationService(BaseNotificationService):
                         if response.status_code == 200:
                             _LOGGER.info("SMS sent successfully after token refresh")
                             return
-                
+
                 _LOGGER.error("Failed to send SMS after token refresh")
             else:
                 _LOGGER.error(
@@ -132,4 +132,4 @@ class GoToSMSNotificationService(BaseNotificationService):
         except requests.exceptions.RequestException as e:
             _LOGGER.error("Network error while sending SMS: %s", e)
         except Exception as e:
-            _LOGGER.error("Unexpected error while sending SMS: %s", e) 
+            _LOGGER.error("Unexpected error while sending SMS: %s", e)

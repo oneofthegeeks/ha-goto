@@ -37,7 +37,7 @@ class GoToOAuth2Manager:
         """Initialize the OAuth2 manager."""
         self.hass = hass
         self.config_entry = config_entry
-        
+
         # Handle both config entry and manual credential setting
         if config_entry is not None:
             self.client_id = config_entry.data[CONF_CLIENT_ID]
@@ -60,7 +60,7 @@ class GoToOAuth2Manager:
             if self.config_entry is None:
                 _LOGGER.warning("No config entry available for token loading")
                 return False
-                
+
             tokens = self.config_entry.data.get("tokens", {})
             if not tokens:
                 _LOGGER.warning("No tokens found in config entry")
@@ -85,11 +85,11 @@ class GoToOAuth2Manager:
             if self.config_entry is None:
                 _LOGGER.warning("No config entry available for token saving")
                 return False
-                
+
             # Update the config entry with new tokens
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
-            
+
             self.hass.config_entries.async_update_entry(
                 self.config_entry, data=data
             )
@@ -102,7 +102,7 @@ class GoToOAuth2Manager:
     def _validate_tokens(self) -> bool:
         """Validate that tokens exist and are not expired."""
         required_keys = [CONF_ACCESS_TOKEN, CONF_REFRESH_TOKEN, CONF_TOKEN_EXPIRES_AT]
-        
+
         if not all(key in self._tokens for key in required_keys):
             return False
 
@@ -121,20 +121,20 @@ class GoToOAuth2Manager:
         """Get the authorization URL for OAuth2 flow."""
         if not self.client_id:
             raise ValueError("Client ID not set")
-        
+
         _LOGGER.info("Creating authorization URL with client_id: %s", self.client_id)
-        
+
         # Create a new session with the correct client_id for authorization
         auth_session = OAuth2Session(
             self.client_id,
             redirect_uri="https://home-assistant.io/auth/callback",
             scope=OAUTH2_SCOPE,
         )
-        
+
         # Allow HTTP for development (disable SSL verification warnings)
         import os
         os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
-        
+
         auth_url = auth_session.authorization_url(OAUTH2_AUTHORIZE_URL)[0]
         _LOGGER.info("Generated authorization URL: %s", auth_url)
         return auth_url
@@ -144,27 +144,27 @@ class GoToOAuth2Manager:
         try:
             import base64
             import urllib.parse
-            
+
             # Extract the authorization code from the response URL
             parsed_url = urllib.parse.urlparse(authorization_response)
             query_params = urllib.parse.parse_qs(parsed_url.query)
             code = query_params.get('code', [None])[0]
-            
+
             if not code:
                 _LOGGER.error("No authorization code found in response")
                 return False
-            
+
             # Create Basic auth header with client credentials
             credentials = f"{self.client_id}:{self.client_secret}"
             encoded_credentials = base64.b64encode(credentials.encode()).decode()
-            
+
             # Prepare the request data
             data = {
                 'grant_type': 'authorization_code',
                 'code': code,
                 'redirect_uri': 'https://home-assistant.io/auth/callback'
             }
-            
+
             # Make the token request
             response = requests.post(
                 OAUTH2_TOKEN_URL,
@@ -176,13 +176,13 @@ class GoToOAuth2Manager:
                 data=data,
                 timeout=30
             )
-            
+
             if response.status_code != 200:
                 _LOGGER.error("Token request failed: %d - %s", response.status_code, response.text)
                 return False
-            
+
             token_data = response.json()
-            
+
             self._tokens = {
                 CONF_ACCESS_TOKEN: token_data["access_token"],
                 CONF_REFRESH_TOKEN: token_data["refresh_token"],
@@ -190,7 +190,7 @@ class GoToOAuth2Manager:
                     datetime.now() + timedelta(seconds=token_data["expires_in"])
                 ).isoformat(),
             }
-            
+
             # Only try to save tokens if we have a config entry
             if self.config_entry is not None:
                 return self.save_tokens()
@@ -211,17 +211,17 @@ class GoToOAuth2Manager:
                 return False
 
             import base64
-            
+
             # Create Basic auth header with client credentials
             credentials = f"{self.client_id}:{self.client_secret}"
             encoded_credentials = base64.b64encode(credentials.encode()).decode()
-            
+
             # Prepare the request data
             data = {
                 'grant_type': 'refresh_token',
                 'refresh_token': self._tokens[CONF_REFRESH_TOKEN]
             }
-            
+
             # Make the token refresh request
             response = requests.post(
                 OAUTH2_TOKEN_URL,
@@ -233,11 +233,11 @@ class GoToOAuth2Manager:
                 data=data,
                 timeout=30
             )
-            
+
             if response.status_code != 200:
                 _LOGGER.error("Token refresh failed: %d - %s", response.status_code, response.text)
                 return False
-            
+
             token_data = response.json()
 
             self._tokens = {
@@ -272,8 +272,8 @@ class GoToOAuth2Manager:
         token = self.get_valid_token()
         if not token:
             return {}
-        
+
         return {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
-        } 
+        }
