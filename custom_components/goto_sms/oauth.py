@@ -7,24 +7,24 @@ from datetime import datetime, timedelta
 from typing import Dict, Optional
 
 import requests
-from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2.rfc6749.errors import TokenExpiredError
-from homeassistant.core import HomeAssistant
+from requests_oauthlib import OAuth2Session
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 
 # Allow HTTP for development (disable SSL verification warnings)
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 from .const import (
-    OAUTH2_AUTHORIZE_URL,
-    OAUTH2_TOKEN_URL,
-    OAUTH2_SCOPE,
     CONF_ACCESS_TOKEN,
-    CONF_REFRESH_TOKEN,
-    CONF_TOKEN_EXPIRES_AT,
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
+    CONF_REFRESH_TOKEN,
+    CONF_TOKEN_EXPIRES_AT,
     DOMAIN,
+    OAUTH2_AUTHORIZE_URL,
+    OAUTH2_SCOPE,
+    OAUTH2_TOKEN_URL,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -133,7 +133,8 @@ class GoToOAuth2Manager:
 
         # Allow HTTP for development (disable SSL verification warnings)
         import os
-        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
         auth_url = auth_session.authorization_url(OAUTH2_AUTHORIZE_URL)[0]
         _LOGGER.info("Generated authorization URL: %s", auth_url)
