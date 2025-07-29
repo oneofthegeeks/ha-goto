@@ -25,10 +25,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install flake8 black isort
     
     - name: Run linting
       run: |
-        pip install flake8 black isort
         flake8 custom_components/goto_sms/ --count --select=E9,F63,F7,F82 --show-source --statistics
         black --check custom_components/goto_sms/
         isort --check-only custom_components/goto_sms/

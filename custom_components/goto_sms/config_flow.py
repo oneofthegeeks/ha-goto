@@ -39,7 +39,10 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
         """Handle the initial step."""
-        _LOGGER.info("GoTo SMS config flow user step called, user_input: %s", user_input is not None)
+        _LOGGER.info(
+            "GoTo SMS config flow user step called, user_input: %s",
+            user_input is not None,
+        )
         errors = {}
 
         if user_input is not None:
@@ -48,7 +51,9 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             # Validate credentials by attempting to create OAuth manager
             try:
-                _LOGGER.info("Creating OAuth manager with client_id: %s", self.client_id)
+                _LOGGER.info(
+                    "Creating OAuth manager with client_id: %s", self.client_id
+                )
                 # For config flow, we need to create a temporary OAuth manager
                 # that doesn't require a config entry yet
                 self.oauth_manager = GoToOAuth2Manager(

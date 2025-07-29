@@ -178,7 +178,9 @@ class GoToOAuth2Manager:
             )
 
             if response.status_code != 200:
-                _LOGGER.error("Token request failed: %d - %s", response.status_code, response.text)
+                _LOGGER.error(
+                    "Token request failed: %d - %s", response.status_code, response.text
+                )
                 return False
 
             token_data = response.json()
@@ -235,14 +237,18 @@ class GoToOAuth2Manager:
             )
 
             if response.status_code != 200:
-                _LOGGER.error("Token refresh failed: %d - %s", response.status_code, response.text)
+                _LOGGER.error(
+                    "Token refresh failed: %d - %s", response.status_code, response.text
+                )
                 return False
 
             token_data = response.json()
 
             self._tokens = {
                 CONF_ACCESS_TOKEN: token_data["access_token"],
-                CONF_REFRESH_TOKEN: token_data.get("refresh_token", self._tokens[CONF_REFRESH_TOKEN]),
+                CONF_REFRESH_TOKEN: token_data.get(
+                    "refresh_token", self._tokens[CONF_REFRESH_TOKEN]
+                ),
                 CONF_TOKEN_EXPIRES_AT: (
                     datetime.now() + timedelta(seconds=token_data["expires_in"])
                 ).isoformat(),

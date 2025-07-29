@@ -69,7 +69,10 @@ class GoToSMSNotificationService(BaseNotificationService):
             return
 
         if not sender_id:
-            _LOGGER.error("No sender_id provided. You must specify the GoTo phone number in E.164 format to send from.")
+            _LOGGER.error(
+                "No sender_id provided. You must specify the GoTo phone number "
+                "in E.164 format to send from."
+            )
             return
 
         # Run the SMS sending in a thread to avoid blocking
@@ -94,7 +97,11 @@ class GoToSMSNotificationService(BaseNotificationService):
 
             url = f"{GOTO_API_BASE_URL}{SMS_ENDPOINT}"
 
-            _LOGGER.info("Sending SMS to %s: %s", target, message[:50] + "..." if len(message) > 50 else message)
+            _LOGGER.info(
+                "Sending SMS to %s: %s",
+                target,
+                message[:50] + "..." if len(message) > 50 else message,
+            )
 
             response = requests.post(
                 url,
