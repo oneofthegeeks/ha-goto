@@ -17,7 +17,6 @@ from .const import (
     GOTO_API_BASE_URL,
     SMS_ENDPOINT,
     ATTR_SENDER_ID,
-    DEFAULT_SENDER_ID,
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
 )
