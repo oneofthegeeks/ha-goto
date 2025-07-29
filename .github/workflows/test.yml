@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9, "3.10", "3.11"]
+        python-version: [3.9, "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -28,13 +28,10 @@ jobs:
     
     - name: Run linting
       run: |
-        pip install flake8 black
+        pip install flake8 black isort
         flake8 custom_components/goto_sms/ --count --select=E9,F63,F7,F82 --show-source --statistics
         black --check custom_components/goto_sms/
-    
-    - name: Test imports
-      run: |
-        python test_integration.py
+        isort --check-only custom_components/goto_sms/
     
     - name: Validate manifest
       run: |
@@ -46,4 +43,32 @@ jobs:
         for key in required_keys:
             assert key in manifest, f'Missing required key: {key}'
         print('✅ Manifest validation passed')
+        "
+    
+    - name: Test imports
+      run: |
+        python -c "
+        import sys
+        import os
+        sys.path.insert(0, 'custom_components')
+        try:
+            from goto_sms import const, oauth, notify, config_flow
+            print('✅ All modules imported successfully')
+        except ImportError as e:
+            print(f'❌ Import error: {e}')
+            sys.exit(1)
+        "
+    
+    - name: Validate translations
+      run: |
+        python -c "
+        import json
+        import os
+        translation_file = 'custom_components/goto_sms/translations/en/config_flow.json'
+        if os.path.exists(translation_file):
+            with open(translation_file, 'r') as f:
+                translations = json.load(f)
+            print('✅ Translation file is valid JSON')
+        else:
+            print('⚠️  No translation file found')
         " 

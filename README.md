@@ -2,6 +2,7 @@
 
 [![Test Integration](https://github.com/oneofthegeeks/ha-goto/workflows/Test%20Integration/badge.svg)](https://github.com/oneofthegeeks/ha-goto/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/setup/prerequisites)
 
 A custom Home Assistant integration that allows you to send SMS messages using the GoTo Connect API.
 
@@ -15,22 +16,29 @@ A custom Home Assistant integration that allows you to send SMS messages using t
 
 ## Installation
 
-### Method 1: Manual Installation
+### Method 1: HACS (Recommended)
 
-1. Copy the `custom_components/goto_sms` folder to your Home Assistant `config/custom_components/` directory
-2. Restart Home Assistant
-3. The integration will be available in the Integrations page
+1. Make sure you have [HACS](https://hacs.xyz/) installed
+2. Add this repository as a custom repository in HACS
+3. Search for "GoTo SMS" in the HACS store
+4. Click "Download" and restart Home Assistant
 
-### Method 2: Using Git
+### Method 2: Manual Installation
+
+1. Download this repository
+2. Copy the `custom_components/goto_sms` folder to your Home Assistant `config/custom_components/` directory
+3. Restart Home Assistant
+4. The integration will be available in the Integrations page
+
+### Method 3: Automated Installation
+
+Run the installation script from the repository root:
 
 ```bash
-cd /path/to/homeassistant/config/custom_components
-git clone https://github.com/oneofthegeeks/ha-goto.git
-cp -r ha-goto/custom_components/goto_sms ./
-rm -rf ha-goto
+./install.sh
 ```
 
-Then restart Home Assistant.
+The script will auto-detect your Home Assistant installation and guide you through the process.
 
 ## Configuration
 
@@ -169,7 +177,11 @@ custom_components/goto_sms/
 ├── const.py            # Constants and configuration
 ├── oauth.py            # OAuth2 token management
 ├── notify.py           # SMS notification service
-└── services.yaml       # Service definitions
+├── config_flow.py      # Configuration flow
+├── services.yaml       # Service definitions
+└── translations/
+    └── en/
+        └── config_flow.json # UI translations
 ```
 
 ### Contributing

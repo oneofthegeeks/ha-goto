@@ -123,5 +123,5 @@ home-assistant_v2.db
 home-assistant_v2.db-shm
 home-assistant_v2.db-wal
 
-# Test files
-test_integration.py 
+# Backup files
+*.backup.* 
