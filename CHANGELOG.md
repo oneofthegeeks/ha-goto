@@ -60,6 +60,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved token validation with detailed logging
 - Better integration with Home Assistant's service system
 
+## [1.1.1] - 2025-01-28
+
+### Fixed
+- **GitHub Actions**: Fixed missing dependencies (`oauthlib`, `requests-oauthlib`) in CI/CD pipeline
+- **Import Formatting**: Resolved import sorting issues across all Python files
+- **Documentation**: Enhanced update instructions and repository cleanup
+
+### Added
+- **Update Script**: Added `update.sh` for easier user updates
+- **Formatting Configuration**: Added `pyproject.toml` for consistent code formatting
+- **Enhanced Documentation**: Comprehensive update instructions in README, INSTALL.md, and QUICKSTART.md
+
+### Changed
+- **Repository Cleanup**: Removed development files for clean release
+- **GitHub Actions**: Streamlined dependency management
+- **Documentation**: Added multiple update methods and troubleshooting guides
+
+### Technical Improvements
+- Consistent code formatting across environments
+- Better CI/CD pipeline reliability
+- Improved user experience with automated update scripts
+
 ## [Unreleased]
 
 ### Planned
