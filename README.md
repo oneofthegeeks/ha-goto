@@ -40,6 +40,114 @@ Run the installation script from the repository root:
 
 The script will auto-detect your Home Assistant installation and guide you through the process.
 
+## Updating
+
+### HACS Users (Recommended)
+
+If you installed via HACS, updates are automatic:
+
+1. **Automatic Updates**: HACS will notify you when updates are available
+2. **Manual Update**: Go to HACS → Integrations → GoTo SMS → Update
+3. **Restart**: After updating, restart Home Assistant
+
+### Manual Installation Updates
+
+#### Option 1: Using the Install Script (Recommended)
+
+```bash
+# Navigate to the repository directory
+cd /path/to/ha-goto
+
+# Pull latest changes
+git pull origin main
+
+# Run the install script (it handles backups automatically)
+./install.sh
+```
+
+#### Option 2: Manual Update
+
+1. **Backup your current installation**:
+   ```bash
+   cp -r /config/custom_components/goto_sms /config/custom_components/goto_sms.backup
+   ```
+
+2. **Download the latest version**:
+   - Download from GitHub releases, or
+   - Clone the repository: `git clone https://github.com/oneofthegeeks/ha-goto.git`
+
+3. **Replace the integration**:
+   ```bash
+   cp -r custom_components/goto_sms /config/custom_components/
+   ```
+
+4. **Restart Home Assistant**
+
+#### Option 3: Using the Dedicated Update Script (Recommended)
+
+The repository includes a dedicated update script:
+
+```bash
+# Run the update script
+./update.sh
+```
+
+The script will:
+- Automatically detect your Home Assistant installation
+- Create a backup of your current installation
+- Pull the latest changes from the repository
+- Install the updated integration
+- Provide clear next steps
+
+#### Option 4: Create Your Own Update Script
+
+Create a reusable update script for easier future updates:
+
+```bash
+#!/bin/bash
+# update_goto_sms.sh
+cd /path/to/ha-goto
+git pull origin main
+./install.sh
+```
+
+Make it executable: `chmod +x update_goto_sms.sh`
+
+### Post-Update Steps
+
+After updating:
+
+1. **Restart Home Assistant** to load the new version
+2. **Check the CHANGELOG** for any breaking changes
+3. **Test the integration** with a simple SMS
+4. **Review your automations** if there were major changes
+
+### Troubleshooting Updates
+
+#### Integration Not Working After Update
+
+1. **Check logs** for errors:
+   ```yaml
+   logger:
+     default: info
+     logs:
+       custom_components.goto_sms: debug
+   ```
+
+2. **Restore from backup** if needed:
+   ```bash
+   rm -rf /config/custom_components/goto_sms
+   cp -r /config/custom_components/goto_sms.backup /config/custom_components/goto_sms
+   ```
+
+3. **Re-authenticate** if OAuth tokens are invalid
+
+#### Version Compatibility
+
+- Check the `manifest.json` for minimum Home Assistant version requirements
+- Review the CHANGELOG for breaking changes
+- Test thoroughly after major version updates
+
 ## Configuration
 
 ### Prerequisites

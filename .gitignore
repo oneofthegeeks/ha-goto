@@ -132,8 +132,4 @@ venv/
 # Release artifacts (optional)
 release_notes.md
 
-# Documentation templates
-CHANGELOG_TEMPLATE.md
-workflow.md
-
  
