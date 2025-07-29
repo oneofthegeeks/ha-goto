@@ -42,7 +42,7 @@ service: notify.goto_sms
 data:
   message: "Hello from Home Assistant!"
   target: "+1234567890"
-  sender_id: "MyHome"
+  sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
 ```
 
 ## 🎉 You're Done!

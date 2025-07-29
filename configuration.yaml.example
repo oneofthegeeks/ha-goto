@@ -19,7 +19,7 @@ automation:
         data:
           message: "Front door has been opened!"
           target: "+1234567890"
-          sender_id: "HomeSecurity"
+          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
 
   - alias: "Send SMS when temperature is too high"
     trigger:
@@ -31,7 +31,7 @@ automation:
         data:
           message: "Temperature alert: Living room is {{ states('sensor.living_room_temperature') }}°F"
           target: "+1234567890"
-          sender_id: "ClimateControl"
+          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
 
 # Example script for testing
 script:
@@ -42,4 +42,4 @@ script:
         data:
           message: "This is a test message from Home Assistant"
           target: "+1234567890"
-          sender_id: "TestSystem" 
+          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format 

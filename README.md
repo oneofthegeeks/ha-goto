@@ -70,7 +70,7 @@ The script will auto-detect your Home Assistant installation and guide you throu
      ```yaml
      message: "Hello from Home Assistant!"
      target: "+1234567890"
-     sender_id: "MyHome"  # Optional
+     sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
      ```
 
 ## Usage
@@ -84,7 +84,7 @@ service: notify.goto_sms
 data:
   message: "Your garage door is open!"
   target: "+1234567890"
-  sender_id: "HomeAssistant"  # Optional
+  sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
 ```
 
 ### Automation Example
@@ -114,7 +114,7 @@ script:
         data:
           message: "This is a test message from Home Assistant"
           target: "+1234567890"
-          sender_id: "TestSystem"
+          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
 ```
 
 ## Configuration Options
@@ -130,7 +130,7 @@ script:
 |-----------|------|----------|-------------|
 | `message` | string | Yes | The SMS message to send |
 | `target` | string | Yes | Phone number with country code (e.g., "+1234567890") |
-| `sender_id` | string | No | Sender ID for the SMS (defaults to "HomeAssistant") |
+| `sender_id` | string | Yes | GoTo phone number in E.164 format to send from (e.g., "+1234567890") |
 
 ## Token Storage
 

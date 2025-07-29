@@ -57,7 +57,7 @@ class GoToSMSNotificationService(BaseNotificationService):
         _LOGGER.info("Received SMS request - message: %s, kwargs: %s", message, kwargs)
         
         target = kwargs.get(ATTR_TARGET)
-        sender_id = kwargs.get(ATTR_SENDER_ID, DEFAULT_SENDER_ID)
+        sender_id = kwargs.get(ATTR_SENDER_ID)
 
         _LOGGER.info("Extracted target: %s, sender_id: %s", target, sender_id)
 
@@ -67,6 +67,10 @@ class GoToSMSNotificationService(BaseNotificationService):
 
         if not message:
             _LOGGER.error("No message provided")
+            return
+
+        if not sender_id:
+            _LOGGER.error("No sender_id provided. You must specify the GoTo phone number in E.164 format to send from.")
             return
 
         # Run the SMS sending in a thread to avoid blocking
