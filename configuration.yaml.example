@@ -15,7 +15,7 @@ automation:
       entity_id: binary_sensor.front_door
       to: "on"
     action:
-      - service: notify.goto_sms
+      - service: goto_sms.send_sms
         data:
           message: "Front door has been opened!"
           target: "+1234567890"
@@ -27,7 +27,7 @@ automation:
       entity_id: sensor.living_room_temperature
       above: 80
     action:
-      - service: notify.goto_sms
+      - service: goto_sms.send_sms
         data:
           message: "Temperature alert: Living room is {{ states('sensor.living_room_temperature') }}°F"
           target: "+1234567890"
@@ -38,7 +38,7 @@ script:
   test_goto_sms:
     alias: "Test GoTo SMS"
     sequence:
-      - service: notify.goto_sms
+      - service: goto_sms.send_sms
         data:
           message: "This is a test message from Home Assistant"
           target: "+1234567890"
