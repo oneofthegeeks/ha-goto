@@ -46,7 +46,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             if not sender_id:
                 _LOGGER.error(
-                    "No sender_id provided. You must specify the GoTo phone number in E.164 format to send from."
+                    "No sender_id provided. You must specify the GoTo phone number "
+                    "in E.164 format to send from."
                 )
                 return
 
