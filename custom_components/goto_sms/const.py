@@ -26,4 +26,4 @@ ATTR_TARGET = "target"
 ATTR_SENDER_ID = "sender_id"
 
 # Default values
-DEFAULT_SENDER_ID = "HomeAssistant" 
+# Note: sender_id is required and must be a valid GoTo phone number in E.164 format 
