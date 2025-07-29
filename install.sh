@@ -3,16 +3,25 @@
 # GoTo SMS Integration Installation Script
 # This script helps you install the integration on your Home Assistant instance
 
+set -e  # Exit on any error
+
 echo "🚀 GoTo SMS Integration Installation"
 echo "===================================="
 
 # Function to detect Home Assistant installation type
 detect_ha_install() {
-    echo "Detecting Home Assistant installation..."
+    echo "🔍 Detecting Home Assistant installation..."
     
-    # Check for Home Assistant OS
+    # Check for Home Assistant OS (most common)
     if [ -d "/config" ] && [ -f "/config/configuration.yaml" ]; then
         echo "✅ Detected: Home Assistant OS"
+        HA_CONFIG="/config"
+        return 0
+    fi
+    
+    # Check for Home Assistant Container
+    if [ -d "/config" ] && [ -d "/config/custom_components" ]; then
+        echo "✅ Detected: Home Assistant Container"
         HA_CONFIG="/config"
         return 0
     fi
@@ -41,10 +50,24 @@ install_integration() {
     echo ""
     echo "📁 Installing to: $config_dir"
     
+    # Check if we're in the right directory
+    if [ ! -d "custom_components/goto_sms" ]; then
+        echo "❌ Error: Please run this script from the ha-goto directory"
+        echo "   Current directory: $(pwd)"
+        echo "   Expected files: custom_components/goto_sms/"
+        exit 1
+    fi
+    
     # Create custom_components directory if it doesn't exist
     if [ ! -d "$config_dir/custom_components" ]; then
         echo "📂 Creating custom_components directory..."
         mkdir -p "$config_dir/custom_components"
+    fi
+    
+    # Check if integration already exists
+    if [ -d "$config_dir/custom_components/goto_sms" ]; then
+        echo "⚠️  Integration already exists. Backing up..."
+        mv "$config_dir/custom_components/goto_sms" "$config_dir/custom_components/goto_sms.backup.$(date +%Y%m%d_%H%M%S)"
     fi
     
     # Copy the integration
@@ -58,7 +81,7 @@ install_integration() {
     echo ""
     echo "✅ Installation complete!"
     echo ""
-    echo "Next steps:"
+    echo "📋 Next steps:"
     echo "1. Restart Home Assistant"
     echo "2. Go to Settings → Devices & Services"
     echo "3. Click 'Add Integration'"
@@ -66,6 +89,8 @@ install_integration() {
     echo "5. Follow the configuration wizard"
     echo ""
     echo "📖 For detailed instructions, see: https://github.com/oneofthegeeks/ha-goto"
+    echo ""
+    echo "🔧 Need help? Check the troubleshooting section in the README"
 }
 
 # Main script
