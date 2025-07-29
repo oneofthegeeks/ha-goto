@@ -49,6 +49,20 @@ data:
 
 Your GoTo SMS integration is now ready to use in automations, scripts, and manual service calls.
 
+## 🔄 Updating
+
+### HACS Users
+- Updates are automatic through HACS
+- Just click "Update" when notified
+
+### Manual Installation
+```bash
+# Navigate to your installation directory
+cd /path/to/ha-goto
+git pull origin main
+./install.sh
+```
+
 ## 📚 Need More Help?
 
 - Check the [full README](README.md) for detailed instructions

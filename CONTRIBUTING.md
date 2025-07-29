@@ -51,9 +51,9 @@ We welcome feature requests! Please include:
    cd ha-goto
    ```
 
-2. **Install dependencies**:
+2. **Install development tools** (optional):
    ```bash
-   pip install -r requirements.txt
+   pip install black flake8 isort
    ```
 
 3. **Copy to Home Assistant**:
@@ -110,10 +110,19 @@ custom_components/goto_sms/
 
 ### Automated Testing
 
-Run the test script:
-```bash
-python3 test_integration.py
-```
+The integration is tested through GitHub Actions. For local testing:
+
+1. **Install development tools**:
+   ```bash
+   pip install black flake8 isort
+   ```
+
+2. **Run linting checks**:
+   ```bash
+   black --check custom_components/goto_sms/
+   flake8 custom_components/goto_sms/
+   isort --check-only custom_components/goto_sms/
+   ```
 
 ## Release Process
 
