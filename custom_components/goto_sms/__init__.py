@@ -7,14 +7,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 
+from . import config_flow
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = []
-
-# Import config flow
-from . import config_flow
 
 _LOGGER.info("GoTo SMS integration loaded")
 
@@ -29,6 +27,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     notify_service = get_service(hass, {})
     if notify_service:
+
         async def handle_sms_service(call):
             """Handle the SMS service call."""
             message = call.data.get("message")
