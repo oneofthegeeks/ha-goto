@@ -53,12 +53,8 @@ class GoToSMSNotificationService(BaseNotificationService):
 
     async def async_send_message(self, message: str, **kwargs: Any) -> None:
         """Send SMS message."""
-        _LOGGER.info("Received SMS request - message: %s, kwargs: %s", message, kwargs)
-
         target = kwargs.get(ATTR_TARGET)
         sender_id = kwargs.get(ATTR_SENDER_ID)
-
-        _LOGGER.info("Extracted target: %s, sender_id: %s", target, sender_id)
 
         if not target:
             _LOGGER.error("No target phone number provided")
@@ -73,6 +69,25 @@ class GoToSMSNotificationService(BaseNotificationService):
                 "No sender_id provided. You must specify the GoTo phone number "
                 "in E.164 format to send from."
             )
+            return
+
+        # Run the SMS sending in a thread to avoid blocking
+        await self.hass.async_add_executor_job(
+            self._send_sms, message, target, sender_id
+        )
+
+    async def async_send_message_service(self, call) -> None:
+        """Handle the service call for sending SMS."""
+        message = call.data.get("message")
+        target = call.data.get("target")
+        sender_id = call.data.get("sender_id")
+
+        if not message:
+            _LOGGER.error("No message provided")
+            return
+
+        if not target:
+            _LOGGER.error("No target phone number provided")
             return
 
         # Run the SMS sending in a thread to avoid blocking
@@ -110,7 +125,7 @@ class GoToSMSNotificationService(BaseNotificationService):
                 timeout=30,
             )
 
-            if response.status_code == 200:
+            if response.status_code in [200, 201]:
                 _LOGGER.info("SMS sent successfully to %s", target)
             elif response.status_code == 401:
                 _LOGGER.error("Authentication failed. Token may be expired.")
@@ -124,7 +139,7 @@ class GoToSMSNotificationService(BaseNotificationService):
                             json=payload,
                             timeout=30,
                         )
-                        if response.status_code == 200:
+                        if response.status_code in [200, 201]:
                             _LOGGER.info("SMS sent successfully after token refresh")
                             return
 

@@ -66,7 +66,7 @@ The script will auto-detect your Home Assistant installation and guide you throu
 
 3. **Test the Integration**:
    - Use the Developer Tools → Services
-   - Call the `notify.goto_sms` service with:
+   - Call the `goto_sms.send_sms` service with:
      ```yaml
      message: "Hello from Home Assistant!"
      target: "+1234567890"
@@ -77,10 +77,10 @@ The script will auto-detect your Home Assistant installation and guide you throu
 
 ### Service Call
 
-Send an SMS using the notification service:
+Send an SMS using the service:
 
 ```yaml
-service: notify.goto_sms
+service: goto_sms.send_sms
 data:
   message: "Your garage door is open!"
   target: "+1234567890"
@@ -97,7 +97,7 @@ automation:
       entity_id: binary_sensor.motion_sensor
       to: "on"
     action:
-      - service: notify.goto_sms
+      - service: goto_sms.send_sms
         data:
           message: "Motion detected in your home!"
           target: "+1234567890"
@@ -110,7 +110,7 @@ script:
   send_test_sms:
     alias: "Send Test SMS"
     sequence:
-      - service: notify.goto_sms
+      - service: goto_sms.send_sms
         data:
           message: "This is a test message from Home Assistant"
           target: "+1234567890"

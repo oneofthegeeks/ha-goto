@@ -1,20 +1,28 @@
-goto_sms:
-  notify:
-    name: "GoTo SMS"
-    description: "Send SMS messages via GoTo Connect API"
-    fields:
-      message:
-        name: "Message"
-        description: "The SMS message to send"
-        required: true
-        example: "Hello from Home Assistant!"
-      target:
-        name: "Target"
-        description: "The phone number to send the SMS to (with country code)"
-        required: true
-        example: "+1234567890"
-      sender_id:
-        name: "Sender ID"
-        description: "The GoTo phone number to send the SMS from (E.164 format)"
-        required: true
-        example: "+1234567890" 
+send_sms:
+  name: "Send SMS"
+  description: "Send SMS messages via GoTo Connect API"
+  fields:
+    message:
+      name: "Message"
+      description: "The SMS message to send"
+      required: true
+      example: "Hello from Home Assistant!"
+      selector:
+        text:
+          multiline: true
+    target:
+      name: "Target Phone Number"
+      description: "The phone number to send the SMS to (with country code)"
+      required: true
+      example: "+1234567890"
+      selector:
+        text:
+          pattern: "^\\+[1-9]\\d{1,14}$"
+    sender_id:
+      name: "Sender Phone Number"
+      description: "The GoTo phone number to send the SMS from (with country code)"
+      required: true
+      example: "+1234567890"
+      selector:
+        text:
+          pattern: "^\\+[1-9]\\d{1,14}$" 
