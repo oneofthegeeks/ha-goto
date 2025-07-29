@@ -146,15 +146,56 @@ class GoToOAuth2Manager:
         """Fetch tokens using authorization response."""
         try:
             import base64
+            import re
             import urllib.parse
 
-            # Extract the authorization code from the response URL
-            parsed_url = urllib.parse.urlparse(authorization_response)
-            query_params = urllib.parse.parse_qs(parsed_url.query)
-            code = query_params.get("code", [None])[0]
+            # Try different ways to extract the authorization code
+            code = None
+
+            # Method 1: Try to parse as URL with query parameters
+            if authorization_response.startswith("http"):
+                try:
+                    parsed_url = urllib.parse.urlparse(authorization_response)
+                    query_params = urllib.parse.parse_qs(parsed_url.query)
+                    code = query_params.get("code", [None])[0]
+                    _LOGGER.debug(
+                        "Extracted code from URL: %s",
+                        code[:10] + "..." if code else "None",
+                    )
+                except Exception as e:
+                    _LOGGER.debug("Failed to parse as URL: %s", e)
+
+            # Method 2: Try to extract code from the response string directly
+            if not code:
+                code_match = re.search(r"[?&]code=([^&]+)", authorization_response)
+                if code_match:
+                    code = code_match.group(1)
+                    _LOGGER.debug(
+                        "Extracted code using regex: %s",
+                        code[:10] + "..." if code else "None",
+                    )
+
+            # Method 3: If the response looks like just a code
+            if (
+                not code
+                and len(authorization_response.strip()) < 100
+                and "=" not in authorization_response
+            ):
+                code = authorization_response.strip()
+                _LOGGER.debug(
+                    "Using response as code directly: %s",
+                    code[:10] + "..." if code else "None",
+                )
 
             if not code:
-                _LOGGER.error("No authorization code found in response")
+                _LOGGER.error(
+                    "No authorization code found in response: %s",
+                    (
+                        authorization_response[:100] + "..."
+                        if len(authorization_response) > 100
+                        else authorization_response
+                    ),
+                )
                 return False
 
             # Create Basic auth header with client credentials

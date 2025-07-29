@@ -129,5 +129,4 @@ home-assistant_v2.db-wal
 # Virtual environment
 venv/
 
-# Debug scripts
-debug_auth.py 
+ 
