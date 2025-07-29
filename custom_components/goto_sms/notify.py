@@ -13,12 +13,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import (
-    DOMAIN,
-    GOTO_API_BASE_URL,
-    SMS_ENDPOINT,
     ATTR_SENDER_ID,
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
+    DOMAIN,
+    GOTO_API_BASE_URL,
+    SMS_ENDPOINT,
 )
 from .oauth import GoToOAuth2Manager
 

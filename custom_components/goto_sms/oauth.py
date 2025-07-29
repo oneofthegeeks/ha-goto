@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 from typing import Dict, Optional
 
 import requests
-from oauthlib.oauth2.rfc6749.errors import TokenExpiredError
-from requests_oauthlib import OAuth2Session
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from oauthlib.oauth2.rfc6749.errors import TokenExpiredError
+from requests_oauthlib import OAuth2Session
 
 # Allow HTTP for development (disable SSL verification warnings)
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
@@ -90,9 +90,7 @@ class GoToOAuth2Manager:
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
 
-            self.hass.config_entries.async_update_entry(
-                self.config_entry, data=data
-            )
+            self.hass.config_entries.async_update_entry(self.config_entry, data=data)
             _LOGGER.info("Tokens saved successfully")
             return True
         except Exception as e:
@@ -149,7 +147,7 @@ class GoToOAuth2Manager:
             # Extract the authorization code from the response URL
             parsed_url = urllib.parse.urlparse(authorization_response)
             query_params = urllib.parse.parse_qs(parsed_url.query)
-            code = query_params.get('code', [None])[0]
+            code = query_params.get("code", [None])[0]
 
             if not code:
                 _LOGGER.error("No authorization code found in response")
@@ -161,21 +159,21 @@ class GoToOAuth2Manager:
 
             # Prepare the request data
             data = {
-                'grant_type': 'authorization_code',
-                'code': code,
-                'redirect_uri': 'https://home-assistant.io/auth/callback'
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": "https://home-assistant.io/auth/callback",
             }
 
             # Make the token request
             response = requests.post(
                 OAUTH2_TOKEN_URL,
                 headers={
-                    'Authorization': f'Basic {encoded_credentials}',
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    "Authorization": f"Basic {encoded_credentials}",
+                    "Accept": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded",
                 },
                 data=data,
-                timeout=30
+                timeout=30,
             )
 
             if response.status_code != 200:
@@ -221,20 +219,20 @@ class GoToOAuth2Manager:
 
             # Prepare the request data
             data = {
-                'grant_type': 'refresh_token',
-                'refresh_token': self._tokens[CONF_REFRESH_TOKEN]
+                "grant_type": "refresh_token",
+                "refresh_token": self._tokens[CONF_REFRESH_TOKEN],
             }
 
             # Make the token refresh request
             response = requests.post(
                 OAUTH2_TOKEN_URL,
                 headers={
-                    'Authorization': f'Basic {encoded_credentials}',
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    "Authorization": f"Basic {encoded_credentials}",
+                    "Accept": "application/json",
+                    "Content-Type": "application/x-www-form-urlencoded",
                 },
                 data=data,
-                timeout=30
+                timeout=30,
             )
 
             if response.status_code != 200:

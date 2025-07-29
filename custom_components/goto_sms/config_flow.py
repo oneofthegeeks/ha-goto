@@ -11,12 +11,12 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
 from .const import (
-    DOMAIN,
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
+    DOMAIN,
     OAUTH2_AUTHORIZE_URL,
-    OAUTH2_TOKEN_URL,
     OAUTH2_SCOPE,
+    OAUTH2_TOKEN_URL,
 )
 from .oauth import GoToOAuth2Manager
 
