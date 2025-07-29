@@ -31,6 +31,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Includes comprehensive documentation
 - Modular code structure for easy maintenance
 
+## [1.1.0] - 2024-01-XX
+
+### Added
+- **Modern UI Interface**: Updated service to use form-based interface with selectors
+- **Enhanced Service**: Changed from `notify.goto_sms` to `goto_sms.send_sms` for better integration
+- **Phone Number Validation**: Added E.164 format validation for phone numbers
+- **Multiline Message Support**: Added support for longer SMS messages with multiline text input
+- **Enhanced Logging**: Added comprehensive debug logging throughout the OAuth2 process
+- **HACS Support**: Added HACS configuration and quality scale improvements
+- **Improved Error Handling**: Better error messages and debugging information
+- **Updated Documentation**: Comprehensive updates to README, examples, and configuration files
+
+### Changed
+- Service name from `notify.goto_sms` to `goto_sms.send_sms`
+- Made `sender_id` parameter required (must be in E.164 format)
+- Enhanced OAuth2 token management with better error handling
+- Updated all documentation and examples to reflect new service name
+
+### Fixed
+- Improved OAuth2 authorization code parsing to handle multiple input formats
+- Enhanced token validation and refresh logic
+- Better error messages for authentication issues
+
+### Technical Improvements
+- Added proper service schema with form interface
+- Enhanced async token saving to prevent blocking
+- Improved token validation with detailed logging
+- Better integration with Home Assistant's service system
+
 ## [Unreleased]
 
 ### Planned
@@ -38,5 +67,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SMS delivery status tracking
 - Template support for dynamic messages
 - Additional language translations
-- Unit tests and automated testing
-- HACS (Home Assistant Community Store) integration 
+- Unit tests and automated testing 
