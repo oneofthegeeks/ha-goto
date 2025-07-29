@@ -127,4 +127,7 @@ home-assistant_v2.db-wal
 *.backup.*
 
 # Virtual environment
-venv/ 
+venv/
+
+# Debug scripts
+debug_auth.py 
