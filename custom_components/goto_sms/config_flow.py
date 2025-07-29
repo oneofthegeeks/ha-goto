@@ -97,7 +97,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_CLIENT_SECRET: self.client_secret,
                         "tokens": self.oauth_manager._tokens,  # Include the tokens
                     }
-                    
+
                     return self.async_create_entry(
                         title="GoTo SMS",
                         data=config_data,
@@ -123,7 +123,12 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except Exception as e:
             _LOGGER.error("Failed to generate authorization URL: %s", e)
             # Create a fallback URL manually
-            auth_url = f"https://authentication.logmeininc.com/oauth/authorize?client_id={self.client_id}&redirect_uri=https://home-assistant.io/auth/callback&response_type=code&scope=sms:send"
+            auth_url = (
+                f"https://authentication.logmeininc.com/oauth/authorize"
+                f"?client_id={self.client_id}"
+                f"&redirect_uri=https://home-assistant.io/auth/callback"
+                f"&response_type=code&scope=sms:send"
+            )
             _LOGGER.info("Using fallback authorization URL: %s", auth_url)
 
         _LOGGER.info("Showing OAuth form with auth_url: %s", auth_url)
@@ -138,7 +143,7 @@ After authorization, you'll be redirected to a URL like:
 
 Copy the entire URL and paste it below.
         """
-        
+
         return self.async_show_form(
             step_id="oauth",
             description_placeholders={
@@ -162,4 +167,4 @@ class InvalidCredentials(HomeAssistantError):
 
 
 class OAuth2Error(HomeAssistantError):
-    """Error to indicate there is an OAuth2 error.""" 
+    """Error to indicate there is an OAuth2 error."""
