@@ -62,6 +62,10 @@ class GoToOAuth2Manager:
                 return False
 
             tokens = self.config_entry.data.get("tokens", {})
+            _LOGGER.debug(
+                "Found tokens in config: %s", list(tokens.keys()) if tokens else "None"
+            )
+
             if not tokens:
                 _LOGGER.warning("No tokens found in config entry")
                 return False
@@ -262,23 +266,40 @@ class GoToOAuth2Manager:
     def get_valid_token(self) -> Optional[str]:
         """Get a valid access token, refreshing if necessary."""
         if not self._tokens:
+            _LOGGER.debug("No tokens in memory, attempting to load from config")
             if not self.load_tokens():
+                _LOGGER.error("Failed to load tokens from config")
                 return None
 
         if not self._validate_tokens():
             _LOGGER.info("Token expired, attempting refresh")
             if not self.refresh_tokens():
+                _LOGGER.error("Failed to refresh tokens")
                 return None
 
-        return self._tokens.get(CONF_ACCESS_TOKEN)
+        token = self._tokens.get(CONF_ACCESS_TOKEN)
+        if token:
+            _LOGGER.debug("Retrieved valid access token")
+        else:
+            _LOGGER.error("No access token found in tokens")
+        return token
 
     def get_headers(self) -> Dict[str, str]:
         """Get headers with valid access token."""
         token = self.get_valid_token()
         if not token:
+            _LOGGER.error("Failed to get valid access token")
             return {}
 
-        return {
+        headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
         }
+        _LOGGER.debug(
+            "Generated headers: %s",
+            {
+                k: v[:10] + "..." if k == "Authorization" else v
+                for k, v in headers.items()
+            },
+        )
+        return headers
