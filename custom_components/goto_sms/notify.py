@@ -40,6 +40,7 @@ def get_service(
         return None
 
     config_entry = config_entries[0]  # Use the first config entry
+    _LOGGER.debug("Creating OAuth manager with config entry: %s", config_entry.entry_id)
     oauth_manager = GoToOAuth2Manager(hass, config_entry)
 
     return GoToSMSNotificationService(hass, oauth_manager)
@@ -52,6 +53,7 @@ class GoToSMSNotificationService(BaseNotificationService):
         """Initialize the service."""
         self.hass = hass
         self.oauth_manager = oauth_manager
+        _LOGGER.debug("GoToSMSNotificationService initialized")
 
     async def async_send_message(self, message: str, **kwargs: Any) -> None:
         """Send SMS message."""
@@ -136,9 +138,12 @@ class GoToSMSNotificationService(BaseNotificationService):
     def _send_sms(self, message: str, target: str, sender_id: str) -> None:
         """Send SMS message via GoTo Connect API."""
         try:
+            _LOGGER.debug("Attempting to get authentication headers")
             headers = self.oauth_manager.get_headers()
             if not headers:
                 _LOGGER.error("Failed to get valid authentication headers")
+                _LOGGER.error("This may indicate expired tokens or configuration issues")
+                _LOGGER.error("Please try re-authenticating the integration")
                 return
 
             # Prepare the SMS payload according to GoTo Connect API specification
@@ -182,6 +187,7 @@ class GoToSMSNotificationService(BaseNotificationService):
                             return
 
                 _LOGGER.error("Failed to send SMS after token refresh")
+                _LOGGER.error("Please re-authenticate the integration")
             else:
                 _LOGGER.error(
                     "Failed to send SMS. Status: %d, Response: %s",
