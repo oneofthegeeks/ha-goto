@@ -5,6 +5,50 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-01-XX
+
+### Added
+- **Re-authentication Flow**: Added proper re-authentication support following Home Assistant best practices
+- **Automatic Re-auth Trigger**: Integration automatically triggers re-authentication when tokens expire
+- **UI Re-authentication**: Users can re-authenticate through the Home Assistant UI without deleting the integration
+- **Enhanced Error Handling**: Better error messages and user guidance for authentication issues
+
+### Features
+- Seamless re-authentication without losing configuration
+- Automatic detection of expired tokens
+- User-friendly re-authentication prompts in the UI
+- Preserved configuration during re-authentication
+
+### Technical Improvements
+- Added `async_step_reauth` and `async_step_reauth_oauth` methods
+- Implemented `_trigger_reauth` method in OAuth manager
+- Enhanced error messages with re-authentication guidance
+- Updated translations for re-authentication flow
+
+### Documentation
+- Added re-authentication troubleshooting section
+- Updated user guidance for authentication issues
+
+## [1.2.1] - 2025-01-XX
+
+### Fixed
+- **OAuth Debugging**: Added comprehensive debugging to OAuth manager
+- **Enhanced Error Messages**: More informative error messages for authentication failures
+- **Token Refresh Handling**: Improved handling of expired tokens with automatic refresh attempts
+- **User Guidance**: Clear instructions when re-authentication is needed
+
+### Added
+- **Debug Logging**: Added detailed debugging throughout the OAuth flow
+- **Better Error Handling**: Enhanced error messages and debugging information
+- **Token Validation**: Better handling of expired or invalid tokens
+- **User Guidance**: Clear instructions when re-authentication is needed
+
+### Technical Improvements
+- Enhanced debugging to `get_headers()` method
+- Improved `load_tokens()` with better error handling
+- Better `get_valid_token()` debugging
+- More detailed error messages suggesting re-authentication
+
 ## [1.2.0] - 2025-01-XX
 
 ### Added
