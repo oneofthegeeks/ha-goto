@@ -48,10 +48,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
-        hass.data[DOMAIN].pop(entry.entry_id)
-
-    return unload_ok
+    try:
+        # Remove the service
+        hass.services.async_remove(DOMAIN, "send_sms")
+        
+        # Clean up the data
+        if DOMAIN in hass.data:
+            hass.data[DOMAIN].pop(entry.entry_id, None)
+            
+        _LOGGER.info("GoTo SMS integration unloaded successfully")
+        return True
+    except Exception as e:
+        _LOGGER.error("Error unloading GoTo SMS integration: %s", e)
+        return False
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
