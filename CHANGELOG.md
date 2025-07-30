@@ -5,6 +5,20 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.9] - 2025-01-XX
+
+### Fixed
+- **Additional Async/Await Issues**: Fixed remaining runtime warnings from unawaited coroutines
+- **Config Entry Updates**: Improved async handling using executor jobs instead of unawaited tasks
+- **Re-authentication Flow**: Fixed async flow to avoid creating unawaited coroutines
+- **Runtime Warnings**: Eliminated remaining "coroutine was never awaited" warnings
+
+### Technical Changes
+- Updated `save_tokens()` to use `async_add_executor_job` instead of `async_create_task`
+- Fixed `_trigger_reauth()` to use executor jobs for async operations
+- Improved error handling for async operations
+- Enhanced logging for async operation debugging
+
 ## [1.2.8] - 2025-01-XX
 
 ### Fixed
