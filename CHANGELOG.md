@@ -5,7 +5,7 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.7] - 2025-01-XX
+## [1.2.8] - 2025-01-XX
 
 ### Fixed
 - **Async/Await Issues**: Fixed runtime warnings caused by unawaited coroutines
@@ -20,6 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `_async_update_config_entry()` and `_async_trigger_reauth()` methods
 - Improved error handling for async operations
 - Enhanced logging for async operation debugging
+
+## [1.2.7] - 2025-01-XX
+
+### Fixed
+- **Version Display**: Updated manifest.json to show correct version 1.2.7
+- **UI Consistency**: Ensures integration page displays correct version
+- **Version Alignment**: Maintains consistency between manifest and release tags
 
 ## [1.2.6] - 2025-01-XX
 
