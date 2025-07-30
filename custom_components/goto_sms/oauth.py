@@ -108,17 +108,26 @@ class GoToOAuth2Manager:
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
 
-            # Schedule the update in the main event loop (non-blocking)
-            self.hass.async_create_task(self._update_config_entry_async(data))
+            # Create a task that will be properly handled by Home Assistant
+            # This avoids the unawaited coroutine warning
+            self.hass.async_create_task(self._async_update_config_entry(data))
             _LOGGER.info("Tokens scheduled for saving")
             return True
         except Exception as e:
             _LOGGER.error("Failed to schedule token saving: %s", e)
             return False
 
-    async def _update_config_entry_async(self, data):
+    async def _async_update_config_entry(self, data):
         """Update config entry asynchronously."""
         try:
+            self.hass.config_entries.async_update_entry(self.config_entry, data=data)
+        except Exception as e:
+            _LOGGER.error("Failed to update config entry: %s", e)
+
+    def _update_config_entry_sync(self, data):
+        """Update config entry synchronously (called from executor)."""
+        try:
+            # Use the sync version of the config entry update
             self.hass.config_entries.async_update_entry(self.config_entry, data=data)
         except Exception as e:
             _LOGGER.error("Failed to update config entry: %s", e)
@@ -405,16 +414,41 @@ class GoToOAuth2Manager:
                 # Import here to avoid circular imports
                 from homeassistant import config_entries
 
-                # Trigger the re-authentication flow
-                self.hass.async_create_task(
-                    self.hass.config_entries.flow.async_init(
-                        DOMAIN,
-                        context={"source": config_entries.SOURCE_REAUTH},
-                        data=self.config_entry.data,
-                    )
-                )
+                # Create a task that will be properly handled by Home Assistant
+                # This avoids the unawaited coroutine warning
+                self.hass.async_create_task(self._async_trigger_reauth())
                 _LOGGER.info("Re-authentication flow triggered successfully")
             else:
                 _LOGGER.warning("No config entry available for re-authentication")
         except Exception as e:
             _LOGGER.error("Failed to trigger re-authentication: %s", e)
+
+    async def _async_trigger_reauth(self):
+        """Async method to trigger re-authentication."""
+        try:
+            from homeassistant import config_entries
+
+            await self.hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": config_entries.SOURCE_REAUTH},
+                data=self.config_entry.data,
+            )
+        except Exception as e:
+            _LOGGER.error("Failed to trigger re-authentication flow: %s", e)
+
+    def _init_reauth_flow_sync(self, config_data):
+        """Initialize re-authentication flow synchronously (called from executor)."""
+        try:
+            from homeassistant import config_entries
+
+            # This will be called in the executor thread
+            # The actual async_init will be handled by Home Assistant
+            self.hass.async_create_task(
+                self.hass.config_entries.flow.async_init(
+                    DOMAIN,
+                    context={"source": config_entries.SOURCE_REAUTH},
+                    data=config_data,
+                )
+            )
+        except Exception as e:
+            _LOGGER.error("Failed to initialize re-authentication flow: %s", e)
