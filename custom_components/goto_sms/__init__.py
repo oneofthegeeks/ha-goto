@@ -51,11 +51,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         # Remove the service
         hass.services.async_remove(DOMAIN, "send_sms")
-        
+
         # Clean up the data
         if DOMAIN in hass.data:
             hass.data[DOMAIN].pop(entry.entry_id, None)
-            
+
         _LOGGER.info("GoTo SMS integration unloaded successfully")
         return True
     except Exception as e:
