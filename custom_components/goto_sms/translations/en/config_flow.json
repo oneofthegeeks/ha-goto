@@ -15,6 +15,13 @@
         "data": {
           "authorization_response": "Authorization Response"
         }
+      },
+      "reauth_oauth": {
+        "title": "Re-authentication Required",
+        "description": "Your GoTo SMS integration needs to be re-authenticated.\n\nPlease authorize the application by visiting this URL:\n\n**{auth_url}**\n\nAfter authorization, you'll be redirected to a URL like:\n`https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`\n\nCopy the entire URL and paste it below.",
+        "data": {
+          "authorization_response": "Authorization Response"
+        }
       }
     },
     "error": {
@@ -22,7 +29,8 @@
       "oauth_failed": "OAuth2 authorization failed"
     },
     "abort": {
-      "already_configured": "GoTo SMS is already configured"
+      "already_configured": "GoTo SMS is already configured",
+      "reauth_successful": "Re-authentication successful"
     }
   }
 } 

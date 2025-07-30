@@ -164,6 +164,120 @@ Copy the entire URL and paste it below.
             ),
         )
 
+    async def async_step_reauth(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> FlowResult:
+        """Handle re-authentication."""
+        _LOGGER.info("Starting re-authentication flow")
+        
+        # Get the existing config entry
+        config_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        if not config_entry:
+            _LOGGER.error("No config entry found for re-authentication")
+            return self.async_abort(reason="unknown")
+        
+        # Store the existing credentials
+        self.client_id = config_entry.data[CONF_CLIENT_ID]
+        self.client_secret = config_entry.data[CONF_CLIENT_SECRET]
+        
+        # Create OAuth manager with existing credentials
+        self.oauth_manager = GoToOAuth2Manager(self.hass, config_entry)
+        self.oauth_manager.client_id = self.client_id
+        self.oauth_manager.client_secret = self.client_secret
+        
+        return await self.async_step_reauth_oauth()
+
+    async def async_step_reauth_oauth(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> FlowResult:
+        """Handle the re-authentication OAuth step."""
+        _LOGGER.info("Entering re-authentication OAuth step")
+        
+        if user_input is not None:
+            # Handle the OAuth2 callback
+            try:
+                authorization_response = user_input.get("authorization_response")
+                if not authorization_response:
+                    raise HomeAssistantError("No authorization response received")
+
+                success = await self.hass.async_add_executor_job(
+                    self.oauth_manager.fetch_token, authorization_response
+                )
+
+                if success:
+                    # Update the existing config entry with new tokens
+                    config_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+                    if config_entry:
+                        # Update the config entry with new tokens
+                        new_data = dict(config_entry.data)
+                        new_data["tokens"] = self.oauth_manager._tokens
+                        
+                        self.hass.config_entries.async_update_entry(
+                            config_entry, data=new_data
+                        )
+                        
+                        _LOGGER.info("Re-authentication successful")
+                        return self.async_abort(reason="reauth_successful")
+                    else:
+                        _LOGGER.error("Config entry not found during re-authentication")
+                        return self.async_abort(reason="unknown")
+                else:
+                    return self.async_show_form(
+                        step_id="reauth_oauth",
+                        errors={"base": "oauth_failed"},
+                    )
+
+            except Exception as e:
+                _LOGGER.error("Re-authentication OAuth2 flow failed: %s", e)
+                return self.async_show_form(
+                    step_id="reauth_oauth",
+                    errors={"base": "oauth_failed"},
+                )
+
+        # Get the authorization URL for re-authentication
+        try:
+            _LOGGER.info("Generating re-authentication authorization URL")
+            auth_url = self.oauth_manager.get_authorization_url()
+            _LOGGER.info("Generated re-authentication authorization URL: %s", auth_url)
+        except Exception as e:
+            _LOGGER.error("Failed to generate re-authentication authorization URL: %s", e)
+            # Create a fallback URL manually
+            auth_url = (
+                f"https://authentication.logmeininc.com/oauth/authorize"
+                f"?client_id={self.client_id}"
+                f"&redirect_uri=https://home-assistant.io/auth/callback"
+                f"&response_type=code&scope={OAUTH2_SCOPE}"
+            )
+            _LOGGER.info("Using fallback re-authentication authorization URL: %s", auth_url)
+
+        description = f"""
+Your GoTo SMS integration needs to be re-authenticated.
+
+Please authorize the application by visiting this URL:
+
+**{auth_url}**
+
+After authorization, you'll be redirected to a URL like:
+`https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`
+
+Copy the entire URL and paste it below.
+
+**Note:** If you only see an authorization code (without the full URL), you can paste just the code.
+        """
+
+        return self.async_show_form(
+            step_id="reauth_oauth",
+            description_placeholders={
+                "auth_url": auth_url,
+                "client_id": self.client_id,
+            },
+            data_schema=vol.Schema(
+                {
+                    vol.Required("authorization_response"): str,
+                }
+            ),
+        )
+
     async def async_step_import(self, import_info: Dict[str, Any]) -> FlowResult:
         """Handle import from configuration.yaml."""
         return await self.async_step_user(import_info)

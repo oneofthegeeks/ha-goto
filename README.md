@@ -374,6 +374,7 @@ The integration stores OAuth2 tokens securely within the Home Assistant config e
    - Check your Client ID and Client Secret
    - Ensure your OAuth2 application is properly configured
    - Verify the redirect URI matches exactly
+   - **Re-authentication**: If tokens expire, the integration will automatically trigger re-authentication
 
 2. **SMS Not Sending**:
    - Check the target phone number format (include country code)
@@ -386,9 +387,24 @@ The integration stores OAuth2 tokens securely within the Home Assistant config e
    - Enable debug logging to see template rendering details
 
 4. **Token Refresh Issues**:
-   - Delete the token file and re-authenticate
+   - The integration will automatically trigger re-authentication when tokens expire
    - Check your internet connection
    - Verify the GoTo Connect API endpoints are accessible
+
+### Re-authentication
+
+The integration now supports automatic re-authentication when tokens expire:
+
+1. **Automatic Detection**: The integration detects when tokens are expired or invalid
+2. **UI Re-authentication**: A re-authentication prompt will appear in your Home Assistant UI
+3. **Seamless Process**: Follow the OAuth flow again without losing your configuration
+4. **Preserved Settings**: Your existing configuration is maintained during re-authentication
+
+**To manually trigger re-authentication:**
+1. Go to **Settings** → **Devices & Services**
+2. Find your GoTo SMS integration
+3. Click the three dots (⋮) and select **Reconfigure**
+4. Follow the OAuth flow again
 
 ### Logs
 

@@ -372,6 +372,12 @@ class GoToOAuth2Manager:
         if not token:
             _LOGGER.error("No valid token available. Tokens: %s", self._tokens)
             _LOGGER.error("Config entry data: %s", self.config_entry.data if self.config_entry else "None")
+            
+            # Trigger re-authentication if we have a config entry
+            if self.config_entry:
+                _LOGGER.info("Triggering re-authentication flow")
+                self._trigger_reauth()
+            
             return {}
 
         _LOGGER.info("Got valid token, creating headers")
@@ -379,3 +385,26 @@ class GoToOAuth2Manager:
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
         }
+
+    def _trigger_reauth(self) -> None:
+        """Trigger re-authentication flow."""
+        try:
+            if self.config_entry:
+                _LOGGER.info("Triggering re-authentication for config entry: %s", self.config_entry.entry_id)
+                
+                # Import here to avoid circular imports
+                from homeassistant import config_entries
+                
+                # Trigger the re-authentication flow
+                self.hass.async_create_task(
+                    self.hass.config_entries.flow.async_init(
+                        DOMAIN,
+                        context={"source": config_entries.SOURCE_REAUTH},
+                        data=self.config_entry.data,
+                    )
+                )
+                _LOGGER.info("Re-authentication flow triggered successfully")
+            else:
+                _LOGGER.warning("No config entry available for re-authentication")
+        except Exception as e:
+            _LOGGER.error("Failed to trigger re-authentication: %s", e)
