@@ -7,9 +7,9 @@ logger:
   logs:
     custom_components.goto_sms: debug
 
-# Example automation using the GoTo SMS service
+# Example automation using the GoTo SMS service with templates
 automation:
-  - alias: "Send SMS when door opens"
+  - alias: "Send SMS when door opens with template"
     trigger:
       platform: state
       entity_id: binary_sensor.front_door
@@ -17,11 +17,11 @@ automation:
     action:
       - service: goto_sms.send_sms
         data:
-          message: "Front door has been opened!"
+          message: "Front door opened at {{ now().strftime('%H:%M on %Y-%m-%d') }}"
           target: "+1234567890"
-          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
+          sender_id: "+1234567890"
 
-  - alias: "Send SMS when temperature is too high"
+  - alias: "Send SMS when temperature is too high with template"
     trigger:
       platform: numeric_state
       entity_id: sensor.living_room_temperature
@@ -29,17 +29,54 @@ automation:
     action:
       - service: goto_sms.send_sms
         data:
-          message: "Temperature alert: Living room is {{ states('sensor.living_room_temperature') }}°F"
+          message: |
+            Temperature Alert!
+            Current: {{ states('sensor.living_room_temperature') }}°F
+            Humidity: {{ states('sensor.living_room_humidity') }}%
+            Time: {{ now().strftime('%H:%M') }}
           target: "+1234567890"
-          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
+          sender_id: "+1234567890"
 
-# Example script for testing
+  - alias: "Send SMS with custom template data"
+    trigger:
+      platform: state
+      entity_id: binary_sensor.motion_sensor
+      to: "on"
+    action:
+      - service: goto_sms.send_sms
+        data:
+          message: "{{ data.event_type }} detected in {{ data.zone }}"
+          target: "+1234567890"
+          sender_id: "+1234567890"
+          data:
+            event_type: "Motion"
+            zone: "living room"
+
+# Example script for testing with templates
 script:
-  test_goto_sms:
-    alias: "Test GoTo SMS"
+  test_goto_sms_template:
+    alias: "Test GoTo SMS with Template"
     sequence:
       - service: goto_sms.send_sms
         data:
-          message: "This is a test message from Home Assistant"
+          message: |
+            Test message from Home Assistant
+            Time: {{ now().strftime('%H:%M:%S') }}
+            Temperature: {{ states('sensor.living_room_temperature') }}°F
           target: "+1234567890"
-          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format 
+          sender_id: "+1234567890"
+
+  send_status_update:
+    alias: "Send Home Status Update"
+    sequence:
+      - service: goto_sms.send_sms
+        data:
+          message: |
+            Home Status Update:
+            - Temperature: {{ states('sensor.living_room_temperature') }}°F
+            - Humidity: {{ states('sensor.living_room_humidity') }}%
+            - Motion: {{ states('binary_sensor.motion_sensor') }}
+            - Door: {{ states('binary_sensor.front_door') }}
+            - Time: {{ now().strftime('%H:%M on %Y-%m-%d') }}
+          target: "+1234567890"
+          sender_id: "+1234567890" 

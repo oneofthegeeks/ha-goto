@@ -10,10 +10,12 @@ from homeassistant.components.notify import (
     BaseNotificationService,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.template import Template, TemplateError
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import (
     ATTR_SENDER_ID,
+    ATTR_TEMPLATE_DATA,
     CONF_CLIENT_ID,
     CONF_CLIENT_SECRET,
     DOMAIN,
@@ -71,9 +73,12 @@ class GoToSMSNotificationService(BaseNotificationService):
             )
             return
 
+        # Render template if message contains template syntax
+        rendered_message = await self._render_template(message, kwargs.get("data", {}))
+
         # Run the SMS sending in a thread to avoid blocking
         await self.hass.async_add_executor_job(
-            self._send_sms, message, target, sender_id
+            self._send_sms, rendered_message, target, sender_id
         )
 
     async def async_send_message_service(self, call) -> None:
@@ -81,6 +86,7 @@ class GoToSMSNotificationService(BaseNotificationService):
         message = call.data.get("message")
         target = call.data.get("target")
         sender_id = call.data.get("sender_id")
+        template_data = call.data.get("data", {})
 
         if not message:
             _LOGGER.error("No message provided")
@@ -90,10 +96,42 @@ class GoToSMSNotificationService(BaseNotificationService):
             _LOGGER.error("No target phone number provided")
             return
 
+        # Render template if message contains template syntax
+        rendered_message = await self._render_template(message, template_data)
+
         # Run the SMS sending in a thread to avoid blocking
         await self.hass.async_add_executor_job(
-            self._send_sms, message, target, sender_id
+            self._send_sms, rendered_message, target, sender_id
         )
+
+    async def _render_template(
+        self, message: str, template_data: Dict[str, Any]
+    ) -> str:
+        """Render template in message if needed."""
+        try:
+            # Check if message contains template syntax
+            if "{{" in message and "}}" in message:
+                _LOGGER.debug("Rendering template: %s", message)
+
+                # Create template object
+                template = Template(message, self.hass)
+
+                # Render template with provided data
+                rendered = template.async_render(template_data)
+
+                _LOGGER.debug("Template rendered to: %s", rendered)
+                return rendered
+            else:
+                # No template syntax, return as-is
+                return message
+
+        except TemplateError as e:
+            _LOGGER.error("Template rendering failed: %s", e)
+            # Return original message if template fails
+            return message
+        except Exception as e:
+            _LOGGER.error("Unexpected error during template rendering: %s", e)
+            return message
 
     def _send_sms(self, message: str, target: str, sender_id: str) -> None:
         """Send SMS message via GoTo Connect API."""

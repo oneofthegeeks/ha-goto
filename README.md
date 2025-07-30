@@ -10,7 +10,8 @@ A custom Home Assistant integration that allows you to send SMS messages using t
 
 - **OAuth2 Authentication**: Secure authentication using GoTo Connect's OAuth2 flow
 - **Automatic Token Refresh**: Automatically refreshes expired access tokens
-- **SMS Notifications**: Send SMS messages via the `notify.goto_sms` service
+- **SMS Notifications**: Send SMS messages via the `goto_sms.send_sms` service
+- **Template Support**: Dynamic messages using Home Assistant templates
 - **Error Handling**: Comprehensive error logging and handling
 - **Async Compatible**: Built with async/await patterns for better performance
 
@@ -195,7 +196,50 @@ data:
   sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
 ```
 
-### Automation Example
+### Template Support
+
+The integration supports Home Assistant templates for dynamic messages:
+
+#### Basic Template Example
+
+```yaml
+service: goto_sms.send_sms
+data:
+  message: "Temperature is {{ states('sensor.living_room_temperature') }}°F"
+  target: "+1234567890"
+  sender_id: "+1234567890"
+```
+
+#### Advanced Template with Data
+
+```yaml
+service: goto_sms.send_sms
+data:
+  message: "Alert: {{ data.location }} sensor triggered at {{ now().strftime('%H:%M') }}"
+  target: "+1234567890"
+  sender_id: "+1234567890"
+  data:
+    location: "kitchen"
+```
+
+#### Template with Entity States
+
+```yaml
+service: goto_sms.send_sms
+data:
+  message: |
+    Home Status Update:
+    - Temperature: {{ states('sensor.living_room_temperature') }}°F
+    - Humidity: {{ states('sensor.living_room_humidity') }}%
+    - Motion: {{ states('binary_sensor.motion_sensor') }}
+    - Door: {{ states('binary_sensor.front_door') }}
+  target: "+1234567890"
+  sender_id: "+1234567890"
+```
+
+### Automation Examples
+
+#### Send SMS when motion detected with template:
 
 ```yaml
 automation:
@@ -207,8 +251,50 @@ automation:
     action:
       - service: goto_sms.send_sms
         data:
-          message: "Motion detected in your home!"
+          message: "Motion detected at {{ now().strftime('%H:%M on %Y-%m-%d') }}"
           target: "+1234567890"
+          sender_id: "+1234567890"
+```
+
+#### Send SMS with sensor data:
+
+```yaml
+automation:
+  - alias: "Temperature alert with template"
+    trigger:
+      platform: numeric_state
+      entity_id: sensor.living_room_temperature
+      above: 80
+    action:
+      - service: goto_sms.send_sms
+        data:
+          message: |
+            Temperature Alert!
+            Current: {{ states('sensor.living_room_temperature') }}°F
+            Humidity: {{ states('sensor.living_room_humidity') }}%
+            Time: {{ now().strftime('%H:%M') }}
+          target: "+1234567890"
+          sender_id: "+1234567890"
+```
+
+#### Send SMS with custom data:
+
+```yaml
+automation:
+  - alias: "Custom alert with template data"
+    trigger:
+      platform: state
+      entity_id: binary_sensor.front_door
+      to: "on"
+    action:
+      - service: goto_sms.send_sms
+        data:
+          message: "{{ data.event_type }} detected in {{ data.zone }}"
+          target: "+1234567890"
+          sender_id: "+1234567890"
+          data:
+            event_type: "Door opening"
+            zone: "front entrance"
 ```
 
 ### Script Example
@@ -236,9 +322,45 @@ script:
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `message` | string | Yes | The SMS message to send |
+| `message` | string | Yes | The SMS message to send (supports templates) |
 | `target` | string | Yes | Phone number with country code (e.g., "+1234567890") |
 | `sender_id` | string | Yes | GoTo phone number in E.164 format to send from (e.g., "+1234567890") |
+| `data` | object | No | Optional data for template rendering |
+
+## Template Features
+
+### Supported Template Functions
+
+- **Entity States**: `{{ states('sensor.temperature') }}`
+- **Time Functions**: `{{ now().strftime('%H:%M') }}`
+- **Conditional Logic**: `{% if states('binary_sensor.motion') == 'on' %}Motion detected{% else %}No motion{% endif %}`
+- **Custom Data**: `{{ data.location }}` (when using the `data` parameter)
+
+### Template Examples
+
+#### Time-based Messages
+```yaml
+message: "Alert at {{ now().strftime('%H:%M on %Y-%m-%d') }}"
+```
+
+#### Sensor Data
+```yaml
+message: "Temperature: {{ states('sensor.living_room_temperature') }}°F"
+```
+
+#### Conditional Messages
+```yaml
+message: "{% if states('binary_sensor.motion') == 'on' %}Motion detected{% else %}No motion{% endif %}"
+```
+
+#### Multi-line Status
+```yaml
+message: |
+  Home Status:
+  - Temperature: {{ states('sensor.temperature') }}°F
+  - Motion: {{ states('binary_sensor.motion') }}
+  - Time: {{ now().strftime('%H:%M') }}
+```
 
 ## Token Storage
 
@@ -258,7 +380,12 @@ The integration stores OAuth2 tokens securely within the Home Assistant config e
    - Verify your GoTo Connect account has SMS capabilities
    - Check the Home Assistant logs for detailed error messages
 
-3. **Token Refresh Issues**:
+3. **Template Rendering Issues**:
+   - Check template syntax for errors
+   - Verify entity names exist
+   - Enable debug logging to see template rendering details
+
+4. **Token Refresh Issues**:
    - Delete the token file and re-authenticate
    - Check your internet connection
    - Verify the GoTo Connect API endpoints are accessible

@@ -5,31 +5,55 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2024-01-XX
+## [1.2.0] - 2025-01-XX
 
 ### Added
-- Initial release of GoTo SMS integration
-- OAuth2 authentication with GoTo Connect API
-- Automatic token refresh functionality
-- SMS notification service (`notify.goto_sms`)
-- Config flow for UI-based configuration
-- Support for custom sender IDs
-- Comprehensive error handling and logging
-- English translations for the UI
-- MIT License and contribution guidelines
+- **Template Support**: Added full Home Assistant template support for dynamic SMS messages
+- **Template Data**: Added optional `data` parameter for template variables
+- **Template Validation**: Automatic template rendering with error handling
+- **Enhanced Examples**: Updated documentation with comprehensive template examples
+- **Template Logging**: Added debug logging for template rendering process
 
 ### Features
-- Send SMS messages via GoTo Connect API
-- Secure credential storage using Home Assistant config entries
-- User-friendly setup process through the UI
-- Support for multiple phone numbers
-- Detailed logging for troubleshooting
+- Dynamic message content using Home Assistant templates
+- Support for entity states, time functions, and custom data
+- Automatic template detection and rendering
+- Graceful fallback if template rendering fails
+- Comprehensive template examples in documentation
 
-### Technical Details
-- Built with async/await patterns for better performance
-- Follows Home Assistant integration development guidelines
-- Includes comprehensive documentation
-- Modular code structure for easy maintenance
+### Technical Improvements
+- Added `_render_template` method for template processing
+- Enhanced service schema with template data support
+- Improved error handling for template rendering
+- Better logging for template debugging
+
+### Documentation
+- Added template usage examples
+- Updated automation examples with templates
+- Enhanced configuration examples
+- Added template troubleshooting section
+
+## [1.1.1] - 2025-01-28
+
+### Fixed
+- **GitHub Actions**: Fixed missing dependencies (`oauthlib`, `requests-oauthlib`) in CI/CD pipeline
+- **Import Formatting**: Resolved import sorting issues across all Python files
+- **Documentation**: Enhanced update instructions and repository cleanup
+
+### Added
+- **Update Script**: Added `update.sh` for easier user updates
+- **Formatting Configuration**: Added `pyproject.toml` for consistent code formatting
+- **Enhanced Documentation**: Comprehensive update instructions in README, INSTALL.md, and QUICKSTART.md
+
+### Changed
+- **Repository Cleanup**: Removed development files for clean release
+- **GitHub Actions**: Streamlined dependency management
+- **Documentation**: Added multiple update methods and troubleshooting guides
+
+### Technical Improvements
+- Consistent code formatting across environments
+- Better CI/CD pipeline reliability
+- Improved user experience with automated update scripts
 
 ## [1.1.0] - 2024-01-XX
 
@@ -60,33 +84,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved token validation with detailed logging
 - Better integration with Home Assistant's service system
 
-## [1.1.1] - 2025-01-28
-
-### Fixed
-- **GitHub Actions**: Fixed missing dependencies (`oauthlib`, `requests-oauthlib`) in CI/CD pipeline
-- **Import Formatting**: Resolved import sorting issues across all Python files
-- **Documentation**: Enhanced update instructions and repository cleanup
+## [1.0.0] - 2024-01-XX
 
 ### Added
-- **Update Script**: Added `update.sh` for easier user updates
-- **Formatting Configuration**: Added `pyproject.toml` for consistent code formatting
-- **Enhanced Documentation**: Comprehensive update instructions in README, INSTALL.md, and QUICKSTART.md
+- Initial release of GoTo SMS integration
+- OAuth2 authentication with GoTo Connect API
+- Automatic token refresh functionality
+- SMS notification service (`notify.goto_sms`)
+- Config flow for UI-based configuration
+- Support for custom sender IDs
+- Comprehensive error handling and logging
+- English translations for the UI
+- MIT License and contribution guidelines
 
-### Changed
-- **Repository Cleanup**: Removed development files for clean release
-- **GitHub Actions**: Streamlined dependency management
-- **Documentation**: Added multiple update methods and troubleshooting guides
+### Features
+- Send SMS messages via GoTo Connect API
+- Secure credential storage using Home Assistant config entries
+- User-friendly setup process through the UI
+- Support for multiple phone numbers
+- Detailed logging for troubleshooting
 
-### Technical Improvements
-- Consistent code formatting across environments
-- Better CI/CD pipeline reliability
-- Improved user experience with automated update scripts
+### Technical Details
+- Built with async/await patterns for better performance
+- Follows Home Assistant integration development guidelines
+- Includes comprehensive documentation
+- Modular code structure for easy maintenance
 
 ## [Unreleased]
 
 ### Planned
 - Support for multiple GoTo Connect accounts
 - SMS delivery status tracking
-- Template support for dynamic messages
 - Additional language translations
 - Unit tests and automated testing 
