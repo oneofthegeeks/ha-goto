@@ -5,6 +5,29 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.11] - 2025-01-XX
+
+### Fixed
+- **Async Pattern Issues**: Fixed deprecated `async_add_job` usage with proper async patterns
+- **Thread Safety**: Fixed "Detected code that calls hass.config_entries.async_update_entry from a thread" error
+- **Authentication Robustness**: Improved automatic token refresh and re-authentication handling
+- **Automatic Re-authentication**: Integration now automatically triggers re-authentication when tokens fail
+- **Better Error Handling**: Enhanced error handling for authentication failures
+
+### Technical Changes
+- Updated `save_tokens()` to use proper async patterns with `async_create_task()`
+- Fixed `_trigger_reauth()` to use proper async patterns
+- Improved `refresh_tokens()` with automatic re-authentication on failure
+- Enhanced `get_valid_token()` with better error handling and automatic re-authentication
+- Eliminated deprecated `async_add_job` usage
+- Improved authentication robustness with automatic retry logic
+
+### Authentication Improvements
+- **Automatic Token Refresh**: Tokens are automatically refreshed when they expire
+- **Automatic Re-authentication**: When token refresh fails, re-authentication is automatically triggered
+- **Better Error Recovery**: Integration handles authentication failures gracefully
+- **Reduced Manual Intervention**: Users should rarely need to manually re-authenticate
+
 ## [1.2.10] - 2025-01-XX
 
 ### Fixed

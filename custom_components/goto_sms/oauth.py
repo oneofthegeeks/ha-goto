@@ -108,9 +108,9 @@ class GoToOAuth2Manager:
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
 
-            # Use a callback to update the config entry in the main event loop
-            # This avoids both thread safety issues and unawaited coroutines
-            def update_config_callback():
+            # Use the proper async pattern - create a task that will be properly awaited
+            # This ensures we're in the main event loop and avoids thread safety issues
+            async def update_config_async():
                 try:
                     self.hass.config_entries.async_update_entry(
                         self.config_entry, data=data
@@ -118,8 +118,8 @@ class GoToOAuth2Manager:
                 except Exception as e:
                     _LOGGER.error("Failed to update config entry: %s", e)
 
-            # Schedule the callback in the main event loop
-            self.hass.async_add_job(update_config_callback)
+            # Schedule the async function properly
+            self.hass.async_create_task(update_config_async())
             _LOGGER.info("Tokens scheduled for saving")
             return True
         except Exception as e:
@@ -346,6 +346,9 @@ class GoToOAuth2Manager:
                 _LOGGER.error(
                     "Token refresh failed: %d - %s", response.status_code, response.text
                 )
+                # If refresh fails, we need to re-authenticate
+                _LOGGER.warning("Token refresh failed, triggering re-authentication")
+                self._trigger_reauth()
                 return False
 
             token_data = response.json()
@@ -360,10 +363,14 @@ class GoToOAuth2Manager:
                 ).isoformat(),
             }
 
+            _LOGGER.info("Tokens refreshed successfully")
             return self.save_tokens()
 
         except Exception as e:
             _LOGGER.error("Failed to refresh tokens: %s", e)
+            # If refresh fails, we need to re-authenticate
+            _LOGGER.warning("Token refresh failed, triggering re-authentication")
+            self._trigger_reauth()
             return False
 
     def get_valid_token(self) -> Optional[str]:
@@ -375,16 +382,32 @@ class GoToOAuth2Manager:
             _LOGGER.info("No tokens in memory, attempting to load from config entry")
             if not self.load_tokens():
                 _LOGGER.error("Failed to load tokens from config entry")
+                # Try to trigger re-authentication if we can't load tokens
+                if self.config_entry:
+                    _LOGGER.warning(
+                        "Triggering re-authentication due to missing tokens"
+                    )
+                    self._trigger_reauth()
                 return None
 
         if not self._validate_tokens():
             _LOGGER.info("Token expired, attempting refresh")
             if not self.refresh_tokens():
                 _LOGGER.error("Failed to refresh tokens")
+                # Re-authentication has already been triggered in refresh_tokens
                 return None
 
         token = self._tokens.get(CONF_ACCESS_TOKEN)
-        _LOGGER.info("Returning token: %s", "present" if token else "none")
+        if not token:
+            _LOGGER.error("No access token available after validation/refresh")
+            if self.config_entry:
+                _LOGGER.warning(
+                    "Triggering re-authentication due to missing access token"
+                )
+                self._trigger_reauth()
+            return None
+
+        _LOGGER.info("Returning valid token")
         return token
 
     def get_headers(self) -> Dict[str, str]:
@@ -423,11 +446,12 @@ class GoToOAuth2Manager:
                 # Import here to avoid circular imports
                 from homeassistant import config_entries
 
-                # Use a callback to trigger re-authentication in the main event loop
-                # This avoids unawaited coroutines
-                def trigger_reauth_callback():
+                # Use the proper async pattern - create a task that will be properly awaited
+                async def trigger_reauth_async():
                     try:
-                        self.hass.config_entries.flow.async_init(
+                        from homeassistant import config_entries
+
+                        await self.hass.config_entries.flow.async_init(
                             DOMAIN,
                             context={"source": config_entries.SOURCE_REAUTH},
                             data=self.config_entry.data,
@@ -435,8 +459,8 @@ class GoToOAuth2Manager:
                     except Exception as e:
                         _LOGGER.error("Failed to trigger re-authentication flow: %s", e)
 
-                # Schedule the callback in the main event loop
-                self.hass.async_add_job(trigger_reauth_callback)
+                # Schedule the async function properly
+                self.hass.async_create_task(trigger_reauth_async())
                 _LOGGER.info("Re-authentication flow triggered successfully")
             else:
                 _LOGGER.warning("No config entry available for re-authentication")
