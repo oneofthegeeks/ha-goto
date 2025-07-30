@@ -5,6 +5,42 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6] - 2025-01-XX
+
+### Fixed
+- **Version Display**: Updated manifest.json to show correct version 1.2.6
+- **UI Consistency**: Ensures integration page displays correct version
+- **Version Alignment**: Maintains consistency between manifest and release tags
+
+## [1.2.5] - 2025-01-XX
+
+### Fixed
+- **Code Formatting**: Applied black formatting to `__init__.py`
+- **CI/CD Workflow**: Fixed workflow failures due to formatting issues
+- **Code Quality**: Ensures consistent formatting across the codebase
+
+## [1.2.4] - 2025-01-XX
+
+### Fixed
+- **Version Display**: Updated manifest.json to show correct version 1.2.4
+- **Config Entry Error**: Fixed "Config entry was never loaded!" error
+- **Service Cleanup**: Properly removes the service when unloading
+- **Data Cleanup**: Correctly cleans up integration data
+- **Error Handling**: Added proper error handling for unload process
+
+### Technical Changes
+- Removed platform unloading that was causing errors
+- Added proper service removal with `hass.services.async_remove()`
+- Added data cleanup with error handling
+- Added logging for successful unload
+
+## [1.2.3] - 2025-01-XX
+
+### Fixed
+- **Code Formatting**: Applied black formatting to fix CI/CD workflow
+- **Formatting Issues**: Fixed formatting in notify.py, config_flow.py, and oauth.py
+- **CI/CD Pipeline**: Ensures consistent code formatting across environments
+
 ## [1.2.2] - 2025-01-XX
 
 ### Added
