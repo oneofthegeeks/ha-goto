@@ -24,6 +24,7 @@ SERVICE_SEND_SMS = "send_sms"
 ATTR_MESSAGE = "message"
 ATTR_TARGET = "target"
 ATTR_SENDER_ID = "sender_id"
+ATTR_TEMPLATE_DATA = "data"
 
 # Default values
 # Note: sender_id is required and must be a valid GoTo phone number in E.164 format

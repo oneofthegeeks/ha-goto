@@ -1,12 +1,12 @@
 send_sms:
   name: "Send SMS"
-  description: "Send SMS messages via GoTo Connect API"
+  description: "Send SMS messages via GoTo Connect API with template support"
   fields:
     message:
       name: "Message"
-      description: "The SMS message to send"
+      description: "The SMS message to send (supports templates)"
       required: true
-      example: "Hello from Home Assistant!"
+      example: "Temperature is {{ states('sensor.living_room_temperature') }}°F"
       selector:
         text:
           multiline: true
@@ -25,4 +25,11 @@ send_sms:
       example: "+1234567890"
       selector:
         text:
-          pattern: "^\\+[1-9]\\d{1,14}$" 
+          pattern: "^\\+[1-9]\\d{1,14}$"
+    data:
+      name: "Template Data"
+      description: "Optional data for template rendering"
+      required: false
+      example: '{"name": "John", "location": "kitchen"}'
+      selector:
+        object: 
