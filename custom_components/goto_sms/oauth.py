@@ -108,9 +108,9 @@ class GoToOAuth2Manager:
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
 
-            # Use a simple function to update the config entry
-            # This avoids creating unawaited coroutines
-            def update_config():
+            # Use a callback to update the config entry in the main event loop
+            # This avoids both thread safety issues and unawaited coroutines
+            def update_config_callback():
                 try:
                     self.hass.config_entries.async_update_entry(
                         self.config_entry, data=data
@@ -118,8 +118,8 @@ class GoToOAuth2Manager:
                 except Exception as e:
                     _LOGGER.error("Failed to update config entry: %s", e)
 
-            # Schedule the update in the main event loop
-            self.hass.async_add_executor_job(update_config)
+            # Schedule the callback in the main event loop
+            self.hass.async_add_job(update_config_callback)
             _LOGGER.info("Tokens scheduled for saving")
             return True
         except Exception as e:
@@ -423,9 +423,9 @@ class GoToOAuth2Manager:
                 # Import here to avoid circular imports
                 from homeassistant import config_entries
 
-                # Use a simple function to trigger re-authentication
-                # This avoids creating unawaited coroutines
-                def trigger_reauth():
+                # Use a callback to trigger re-authentication in the main event loop
+                # This avoids unawaited coroutines
+                def trigger_reauth_callback():
                     try:
                         self.hass.config_entries.flow.async_init(
                             DOMAIN,
@@ -435,8 +435,8 @@ class GoToOAuth2Manager:
                     except Exception as e:
                         _LOGGER.error("Failed to trigger re-authentication flow: %s", e)
 
-                # Schedule the re-authentication trigger
-                self.hass.async_add_executor_job(trigger_reauth)
+                # Schedule the callback in the main event loop
+                self.hass.async_add_job(trigger_reauth_callback)
                 _LOGGER.info("Re-authentication flow triggered successfully")
             else:
                 _LOGGER.warning("No config entry available for re-authentication")
