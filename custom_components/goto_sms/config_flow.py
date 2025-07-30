@@ -169,22 +169,24 @@ Copy the entire URL and paste it below.
     ) -> FlowResult:
         """Handle re-authentication."""
         _LOGGER.info("Starting re-authentication flow")
-        
+
         # Get the existing config entry
-        config_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        config_entry = self.hass.config_entries.async_get_entry(
+            self.context["entry_id"]
+        )
         if not config_entry:
             _LOGGER.error("No config entry found for re-authentication")
             return self.async_abort(reason="unknown")
-        
+
         # Store the existing credentials
         self.client_id = config_entry.data[CONF_CLIENT_ID]
         self.client_secret = config_entry.data[CONF_CLIENT_SECRET]
-        
+
         # Create OAuth manager with existing credentials
         self.oauth_manager = GoToOAuth2Manager(self.hass, config_entry)
         self.oauth_manager.client_id = self.client_id
         self.oauth_manager.client_secret = self.client_secret
-        
+
         return await self.async_step_reauth_oauth()
 
     async def async_step_reauth_oauth(
@@ -192,7 +194,7 @@ Copy the entire URL and paste it below.
     ) -> FlowResult:
         """Handle the re-authentication OAuth step."""
         _LOGGER.info("Entering re-authentication OAuth step")
-        
+
         if user_input is not None:
             # Handle the OAuth2 callback
             try:
@@ -206,16 +208,18 @@ Copy the entire URL and paste it below.
 
                 if success:
                     # Update the existing config entry with new tokens
-                    config_entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+                    config_entry = self.hass.config_entries.async_get_entry(
+                        self.context["entry_id"]
+                    )
                     if config_entry:
                         # Update the config entry with new tokens
                         new_data = dict(config_entry.data)
                         new_data["tokens"] = self.oauth_manager._tokens
-                        
+
                         self.hass.config_entries.async_update_entry(
                             config_entry, data=new_data
                         )
-                        
+
                         _LOGGER.info("Re-authentication successful")
                         return self.async_abort(reason="reauth_successful")
                     else:
@@ -240,7 +244,9 @@ Copy the entire URL and paste it below.
             auth_url = self.oauth_manager.get_authorization_url()
             _LOGGER.info("Generated re-authentication authorization URL: %s", auth_url)
         except Exception as e:
-            _LOGGER.error("Failed to generate re-authentication authorization URL: %s", e)
+            _LOGGER.error(
+                "Failed to generate re-authentication authorization URL: %s", e
+            )
             # Create a fallback URL manually
             auth_url = (
                 f"https://authentication.logmeininc.com/oauth/authorize"
@@ -248,7 +254,9 @@ Copy the entire URL and paste it below.
                 f"&redirect_uri=https://home-assistant.io/auth/callback"
                 f"&response_type=code&scope={OAUTH2_SCOPE}"
             )
-            _LOGGER.info("Using fallback re-authentication authorization URL: %s", auth_url)
+            _LOGGER.info(
+                "Using fallback re-authentication authorization URL: %s", auth_url
+            )
 
         description = f"""
 Your GoTo SMS integration needs to be re-authenticated.

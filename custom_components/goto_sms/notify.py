@@ -142,9 +142,13 @@ class GoToSMSNotificationService(BaseNotificationService):
             headers = self.oauth_manager.get_headers()
             if not headers:
                 _LOGGER.error("Failed to get valid authentication headers")
-                _LOGGER.error("This may indicate expired tokens or configuration issues")
+                _LOGGER.error(
+                    "This may indicate expired tokens or configuration issues"
+                )
                 _LOGGER.error("Re-authentication has been triggered automatically")
-                _LOGGER.error("Please check your Home Assistant UI for re-authentication prompts")
+                _LOGGER.error(
+                    "Please check your Home Assistant UI for re-authentication prompts"
+                )
                 return
 
             # Prepare the SMS payload according to GoTo Connect API specification
@@ -189,7 +193,9 @@ class GoToSMSNotificationService(BaseNotificationService):
 
                 _LOGGER.error("Failed to send SMS after token refresh")
                 _LOGGER.error("Re-authentication has been triggered automatically")
-                _LOGGER.error("Please check your Home Assistant UI for re-authentication prompts")
+                _LOGGER.error(
+                    "Please check your Home Assistant UI for re-authentication prompts"
+                )
             else:
                 _LOGGER.error(
                     "Failed to send SMS. Status: %d, Response: %s",

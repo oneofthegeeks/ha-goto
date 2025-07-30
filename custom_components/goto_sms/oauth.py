@@ -72,7 +72,9 @@ class GoToOAuth2Manager:
 
             if not tokens:
                 _LOGGER.warning("No tokens found in config entry")
-                _LOGGER.warning("This may indicate the integration needs to be re-authenticated")
+                _LOGGER.warning(
+                    "This may indicate the integration needs to be re-authenticated"
+                )
                 return False
 
             self._tokens = tokens
@@ -82,7 +84,9 @@ class GoToOAuth2Manager:
                 _LOGGER.warning("Invalid or expired tokens found")
                 _LOGGER.warning("Attempting to refresh tokens...")
                 if not self.refresh_tokens():
-                    _LOGGER.error("Failed to refresh tokens. Re-authentication required.")
+                    _LOGGER.error(
+                        "Failed to refresh tokens. Re-authentication required."
+                    )
                     return False
                 return True
 
@@ -371,13 +375,16 @@ class GoToOAuth2Manager:
         token = self.get_valid_token()
         if not token:
             _LOGGER.error("No valid token available. Tokens: %s", self._tokens)
-            _LOGGER.error("Config entry data: %s", self.config_entry.data if self.config_entry else "None")
-            
+            _LOGGER.error(
+                "Config entry data: %s",
+                self.config_entry.data if self.config_entry else "None",
+            )
+
             # Trigger re-authentication if we have a config entry
             if self.config_entry:
                 _LOGGER.info("Triggering re-authentication flow")
                 self._trigger_reauth()
-            
+
             return {}
 
         _LOGGER.info("Got valid token, creating headers")
@@ -390,11 +397,14 @@ class GoToOAuth2Manager:
         """Trigger re-authentication flow."""
         try:
             if self.config_entry:
-                _LOGGER.info("Triggering re-authentication for config entry: %s", self.config_entry.entry_id)
-                
+                _LOGGER.info(
+                    "Triggering re-authentication for config entry: %s",
+                    self.config_entry.entry_id,
+                )
+
                 # Import here to avoid circular imports
                 from homeassistant import config_entries
-                
+
                 # Trigger the re-authentication flow
                 self.hass.async_create_task(
                     self.hass.config_entries.flow.async_init(
