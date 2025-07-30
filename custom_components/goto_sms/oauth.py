@@ -57,6 +57,7 @@ class GoToOAuth2Manager:
     def load_tokens(self) -> bool:
         """Load tokens from config entry."""
         try:
+            _LOGGER.debug("load_tokens() called")
             if self.config_entry is None:
                 _LOGGER.warning("No config entry available for token loading")
                 return False
@@ -71,6 +72,7 @@ class GoToOAuth2Manager:
 
             if not tokens:
                 _LOGGER.warning("No tokens found in config entry")
+                _LOGGER.warning("This may indicate the integration needs to be re-authenticated")
                 return False
 
             self._tokens = tokens
@@ -78,7 +80,11 @@ class GoToOAuth2Manager:
 
             if not self._validate_tokens():
                 _LOGGER.warning("Invalid or expired tokens found")
-                return False
+                _LOGGER.warning("Attempting to refresh tokens...")
+                if not self.refresh_tokens():
+                    _LOGGER.error("Failed to refresh tokens. Re-authentication required.")
+                    return False
+                return True
 
             _LOGGER.info("Tokens loaded successfully")
             return True
@@ -340,6 +346,7 @@ class GoToOAuth2Manager:
 
     def get_valid_token(self) -> Optional[str]:
         """Get a valid access token, refreshing if necessary."""
+        _LOGGER.debug("get_valid_token() called")
         _LOGGER.info("Getting valid token. Current tokens: %s", self._tokens)
 
         if not self._tokens:
@@ -360,9 +367,11 @@ class GoToOAuth2Manager:
 
     def get_headers(self) -> Dict[str, str]:
         """Get headers with valid access token."""
+        _LOGGER.debug("get_headers() called")
         token = self.get_valid_token()
         if not token:
             _LOGGER.error("No valid token available. Tokens: %s", self._tokens)
+            _LOGGER.error("Config entry data: %s", self.config_entry.data if self.config_entry else "None")
             return {}
 
         _LOGGER.info("Got valid token, creating headers")
