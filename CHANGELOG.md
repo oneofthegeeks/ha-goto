@@ -5,6 +5,22 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.10] - 2025-01-XX
+
+### Fixed
+- **Final Async/Await Issues**: Fixed remaining runtime warnings and thread safety issues
+- **Thread Safety**: Fixed "Detected code that calls hass.config_entries.async_update_entry from a thread" error
+- **Unawaited Coroutines**: Eliminated all "coroutine was never awaited" warnings
+- **Config Entry Updates**: Properly handled async operations using callbacks
+- **Re-authentication Flow**: Fixed async flow using proper callback approach
+
+### Technical Changes
+- Updated `save_tokens()` to use `async_add_job()` with callbacks instead of `async_create_task()`
+- Fixed `_trigger_reauth()` to use `async_add_job()` with callbacks
+- Improved thread safety by ensuring all async operations run in the main event loop
+- Enhanced error handling for async operations
+- Eliminated all unawaited coroutines
+
 ## [1.2.9] - 2025-01-XX
 
 ### Fixed
@@ -117,120 +133,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **User Guidance**: Clear instructions when re-authentication is needed
 
 ### Technical Improvements
-- Enhanced debugging to `get_headers()` method
-- Improved `load_tokens()` with better error handling
-- Better `get_valid_token()` debugging
-- More detailed error messages suggesting re-authentication
-
-## [1.2.0] - 2025-01-XX
-
-### Added
-- **Template Support**: Added full Home Assistant template support for dynamic SMS messages
-- **Template Data**: Added optional `data` parameter for template variables
-- **Template Validation**: Automatic template rendering with error handling
-- **Enhanced Examples**: Updated documentation with comprehensive template examples
-- **Template Logging**: Added debug logging for template rendering process
-
-### Features
-- Dynamic message content using Home Assistant templates
-- Support for entity states, time functions, and custom data
-- Automatic template detection and rendering
-- Graceful fallback if template rendering fails
-- Comprehensive template examples in documentation
-
-### Technical Improvements
-- Added `_render_template` method for template processing
-- Enhanced service schema with template data support
-- Improved error handling for template rendering
-- Better logging for template debugging
-
-### Documentation
-- Added template usage examples
-- Updated automation examples with templates
-- Enhanced configuration examples
-- Added template troubleshooting section
-
-## [1.1.1] - 2025-01-28
-
-### Fixed
-- **GitHub Actions**: Fixed missing dependencies (`oauthlib`, `requests-oauthlib`) in CI/CD pipeline
-- **Import Formatting**: Resolved import sorting issues across all Python files
-- **Documentation**: Enhanced update instructions and repository cleanup
-
-### Added
-- **Update Script**: Added `update.sh` for easier user updates
-- **Formatting Configuration**: Added `pyproject.toml` for consistent code formatting
-- **Enhanced Documentation**: Comprehensive update instructions in README, INSTALL.md, and QUICKSTART.md
-
-### Changed
-- **Repository Cleanup**: Removed development files for clean release
-- **GitHub Actions**: Streamlined dependency management
-- **Documentation**: Added multiple update methods and troubleshooting guides
-
-### Technical Improvements
-- Consistent code formatting across environments
-- Better CI/CD pipeline reliability
-- Improved user experience with automated update scripts
-
-## [1.1.0] - 2024-01-XX
-
-### Added
-- **Modern UI Interface**: Updated service to use form-based interface with selectors
-- **Enhanced Service**: Changed from `notify.goto_sms` to `goto_sms.send_sms` for better integration
-- **Phone Number Validation**: Added E.164 format validation for phone numbers
-- **Multiline Message Support**: Added support for longer SMS messages with multiline text input
-- **Enhanced Logging**: Added comprehensive debug logging throughout the OAuth2 process
-- **HACS Support**: Added HACS configuration and quality scale improvements
-- **Improved Error Handling**: Better error messages and debugging information
-- **Updated Documentation**: Comprehensive updates to README, examples, and configuration files
-
-### Changed
-- Service name from `notify.goto_sms` to `goto_sms.send_sms`
-- Made `sender_id` parameter required (must be in E.164 format)
-- Enhanced OAuth2 token management with better error handling
-- Updated all documentation and examples to reflect new service name
-
-### Fixed
-- Improved OAuth2 authorization code parsing to handle multiple input formats
-- Enhanced token validation and refresh logic
-- Better error messages for authentication issues
-
-### Technical Improvements
-- Added proper service schema with form interface
-- Enhanced async token saving to prevent blocking
-- Improved token validation with detailed logging
-- Better integration with Home Assistant's service system
-
-## [1.0.0] - 2024-01-XX
-
-### Added
-- Initial release of GoTo SMS integration
-- OAuth2 authentication with GoTo Connect API
-- Automatic token refresh functionality
-- SMS notification service (`notify.goto_sms`)
-- Config flow for UI-based configuration
-- Support for custom sender IDs
-- Comprehensive error handling and logging
-- English translations for the UI
-- MIT License and contribution guidelines
-
-### Features
-- Send SMS messages via GoTo Connect API
-- Secure credential storage using Home Assistant config entries
-- User-friendly setup process through the UI
-- Support for multiple phone numbers
-- Detailed logging for troubleshooting
-
-### Technical Details
-- Built with async/await patterns for better performance
-- Follows Home Assistant integration development guidelines
-- Includes comprehensive documentation
-- Modular code structure for easy maintenance
-
-## [Unreleased]
-
-### Planned
-- Support for multiple GoTo Connect accounts
-- SMS delivery status tracking
-- Additional language translations
-- Unit tests and automated testing 
+- Enhanced debugging to `
