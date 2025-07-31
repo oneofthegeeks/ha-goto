@@ -12,8 +12,49 @@ A custom Home Assistant integration that allows you to send SMS messages using t
 - **Automatic Token Refresh**: Automatically refreshes expired access tokens
 - **SMS Notifications**: Send SMS messages via the `goto_sms.send_sms` service
 - **Template Support**: Dynamic messages using Home Assistant templates
+- **Message Tracking**: Automatic tracking of sent SMS messages with dashboard integration
 - **Error Handling**: Comprehensive error logging and handling
 - **Async Compatible**: Built with async/await patterns for better performance
+
+## SMS Message Tracking
+
+The integration includes automatic message tracking capabilities. You can monitor your SMS usage through your Home Assistant dashboard using two methods:
+
+### Option 1: Simple Input Number (Recommended for Beginners)
+
+Add to your `configuration.yaml`:
+```yaml
+input_number:
+  sms_messages_sent:
+    name: "SMS Messages Sent"
+    min: 0
+    max: 999999
+    step: 1
+    icon: mdi:message-text
+    unit_of_measurement: "messages"
+```
+
+### Option 2: Advanced Sensor (Automatic)
+
+The integration automatically creates a sensor with detailed tracking:
+- Daily, weekly, monthly, and total message counts
+- Automatic counter resets
+- Persistent storage across restarts
+
+### Dashboard Examples
+
+```yaml
+# Simple statistics card
+type: entities
+title: "SMS Statistics"
+entities:
+  - entity: input_number.sms_messages_sent
+    name: "Total SMS Sent"
+  - entity: sensor.sms_messages_sent
+    name: "Advanced SMS Counter"
+```
+
+For detailed tracking documentation, see [SMS_TRACKING.md](SMS_TRACKING.md).
 
 ## Installation
 

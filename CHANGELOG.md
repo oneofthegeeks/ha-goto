@@ -5,6 +5,35 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-01-XX
+
+### Added
+- **SMS Message Tracking**: Added automatic tracking of sent SMS messages
+- **Dual Tracking Methods**: Support for both simple input_number and advanced sensor tracking
+- **Dashboard Integration**: Easy integration with Home Assistant dashboards
+- **Automatic Counter Management**: Daily/weekly/monthly tracking with automatic resets
+- **Persistent Storage**: Message counts persist across Home Assistant restarts
+
+### Features
+- **Simple Input Number Tracking**: Easy setup with `input_number.sms_messages_sent`
+- **Advanced Sensor Tracking**: Automatic sensor with detailed attributes
+- **Automatic Incrementing**: Counters increment automatically on successful SMS sends
+- **Failed Message Handling**: Counters only increment for successful sends
+- **Dashboard Compatibility**: Works with all Home Assistant dashboard cards
+
+### Technical Improvements
+- Added `sensor.py` for advanced SMS tracking capabilities
+- Enhanced `notify.py` with dual tracking support
+- Updated `__init__.py` to include sensor platform
+- Added comprehensive documentation in `SMS_TRACKING.md`
+- Improved error handling for tracking operations
+
+### Documentation
+- Added detailed SMS tracking documentation
+- Included dashboard examples and use cases
+- Added troubleshooting guide for tracking features
+- Updated README with tracking feature overview
+
 ## [1.2.11] - 2025-01-XX
 
 ### Fixed

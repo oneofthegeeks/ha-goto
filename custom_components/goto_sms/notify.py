@@ -175,6 +175,10 @@ class GoToSMSNotificationService(BaseNotificationService):
 
             if response.status_code in [200, 201]:
                 _LOGGER.info("SMS sent successfully to %s", target)
+
+                # Track the message using both methods
+                self._track_message_sent()
+
             elif response.status_code == 401:
                 _LOGGER.error("Authentication failed. Token may be expired.")
                 # Try to refresh token and retry once
@@ -189,6 +193,10 @@ class GoToSMSNotificationService(BaseNotificationService):
                         )
                         if response.status_code in [200, 201]:
                             _LOGGER.info("SMS sent successfully after token refresh")
+
+                            # Track the message using both methods
+                            self._track_message_sent()
+
                             return
 
                 _LOGGER.error("Failed to send SMS after token refresh")
@@ -207,3 +215,67 @@ class GoToSMSNotificationService(BaseNotificationService):
             _LOGGER.error("Network error while sending SMS: %s", e)
         except Exception as e:
             _LOGGER.error("Unexpected error while sending SMS: %s", e)
+
+    def _track_message_sent(self) -> None:
+        """Track that a message was sent using both tracking methods."""
+        try:
+            # Method 1: Update input_number if it exists
+            try:
+                current_count = self._get_input_number_count()
+                if current_count is not None:
+                    self.hass.async_create_task(
+                        self.hass.services.async_call(
+                            "input_number",
+                            "set_value",
+                            {
+                                "entity_id": "input_number.sms_messages_sent",
+                                "value": current_count + 1,
+                            },
+                        )
+                    )
+                    _LOGGER.debug("Updated input_number SMS counter")
+            except Exception as e:
+                _LOGGER.debug(f"Failed to update input_number counter: {e}")
+
+            # Method 2: Update sensor if it exists
+            try:
+                sensor_entity_id = self._find_sms_sensor()
+                if sensor_entity_id:
+                    # Get the sensor entity and increment it
+                    sensor_state = self.hass.states.get(sensor_entity_id)
+                    if sensor_state:
+                        # Try to find the sensor object in the entity registry
+                        entity_registry = self.hass.data.get("entity_registry")
+                        if entity_registry:
+                            for entity in entity_registry.entities.values():
+                                if entity.entity_id == sensor_entity_id:
+                                    if hasattr(entity, "increment_counter"):
+                                        entity.increment_counter()
+                                        entity.save_state()
+                                        _LOGGER.debug("Updated SMS sensor counter")
+                                        break
+            except Exception as e:
+                _LOGGER.debug(f"Failed to update SMS sensor counter: {e}")
+
+        except Exception as e:
+            _LOGGER.debug(f"Failed to track message: {e}")
+
+    def _get_input_number_count(self) -> Optional[int]:
+        """Get the current SMS count from the input_number entity."""
+        try:
+            state = self.hass.states.get("input_number.sms_messages_sent")
+            if state and state.state:
+                return int(float(state.state))
+        except (ValueError, AttributeError):
+            pass
+        return None
+
+    def _find_sms_sensor(self) -> Optional[str]:
+        """Find the SMS counter sensor entity ID."""
+        try:
+            for entity_id in self.hass.states.async_entity_ids("sensor"):
+                if "sms_messages_sent" in entity_id.lower():
+                    return entity_id
+        except Exception:
+            pass
+        return None
