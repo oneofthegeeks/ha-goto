@@ -1,6 +1,7 @@
 """GoTo SMS notification service."""
 
 import logging
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 import requests
@@ -223,42 +224,55 @@ class GoToSMSNotificationService(BaseNotificationService):
             try:
                 current_count = self._get_input_number_count()
                 if current_count is not None:
-                    self.hass.async_create_task(
-                        self.hass.services.async_call(
-                            "input_number",
-                            "set_value",
-                            {
-                                "entity_id": "input_number.sms_messages_sent",
-                                "value": current_count + 1,
-                            },
-                        )
+                    # Use async_add_job to properly schedule the service call
+                    self.hass.async_add_job(
+                        self.hass.services.async_call,
+                        "input_number",
+                        "set_value",
+                        {
+                            "entity_id": "input_number.sms_messages_sent",
+                            "value": current_count + 1,
+                        },
                     )
-                    _LOGGER.debug("Updated input_number SMS counter")
+                    _LOGGER.info("Scheduled input_number SMS counter update")
             except Exception as e:
-                _LOGGER.debug(f"Failed to update input_number counter: {e}")
+                _LOGGER.error(f"Failed to update input_number counter: {e}")
 
             # Method 2: Update sensor if it exists
             try:
                 sensor_entity_id = self._find_sms_sensor()
                 if sensor_entity_id:
-                    # Get the sensor entity and increment it
-                    sensor_state = self.hass.states.get(sensor_entity_id)
-                    if sensor_state:
-                        # Try to find the sensor object in the entity registry
-                        entity_registry = self.hass.data.get("entity_registry")
-                        if entity_registry:
-                            for entity in entity_registry.entities.values():
-                                if entity.entity_id == sensor_entity_id:
-                                    if hasattr(entity, "increment_counter"):
-                                        entity.increment_counter()
-                                        entity.save_state()
-                                        _LOGGER.debug("Updated SMS sensor counter")
-                                        break
+                    # Use a service call to update the sensor state
+                    self.hass.async_add_job(
+                        self.hass.states.async_set,
+                        sensor_entity_id,
+                        self._get_sensor_current_value(sensor_entity_id) + 1,
+                        {
+                            "daily_count": self._get_sensor_attr(
+                                sensor_entity_id, "daily_count", 0
+                            )
+                            + 1,
+                            "weekly_count": self._get_sensor_attr(
+                                sensor_entity_id, "weekly_count", 0
+                            )
+                            + 1,
+                            "monthly_count": self._get_sensor_attr(
+                                sensor_entity_id, "monthly_count", 0
+                            )
+                            + 1,
+                            "total_count": self._get_sensor_attr(
+                                sensor_entity_id, "total_count", 0
+                            )
+                            + 1,
+                            "last_reset": datetime.now().date().isoformat(),
+                        },
+                    )
+                    _LOGGER.info("Scheduled SMS sensor counter update")
             except Exception as e:
-                _LOGGER.debug(f"Failed to update SMS sensor counter: {e}")
+                _LOGGER.error(f"Failed to update SMS sensor counter: {e}")
 
         except Exception as e:
-            _LOGGER.debug(f"Failed to track message: {e}")
+            _LOGGER.error(f"Failed to track message: {e}")
 
     def _get_input_number_count(self) -> Optional[int]:
         """Get the current SMS count from the input_number entity."""
@@ -279,3 +293,23 @@ class GoToSMSNotificationService(BaseNotificationService):
         except Exception:
             pass
         return None
+
+    def _get_sensor_current_value(self, entity_id: str) -> int:
+        """Get the current value of a sensor."""
+        try:
+            state = self.hass.states.get(entity_id)
+            if state and state.state:
+                return int(float(state.state))
+        except (ValueError, AttributeError):
+            pass
+        return 0
+
+    def _get_sensor_attr(self, entity_id: str, attr: str, default: int = 0) -> int:
+        """Get a specific attribute from a sensor."""
+        try:
+            state = self.hass.states.get(entity_id)
+            if state and state.attributes:
+                return int(state.attributes.get(attr, default))
+        except (ValueError, AttributeError):
+            pass
+        return default
