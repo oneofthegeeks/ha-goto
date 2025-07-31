@@ -5,6 +5,27 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2025-01-XX
+
+### Fixed
+- **SMS Counter Tracking**: Fixed issue where SMS message counters weren't updating when messages were sent
+- **Async Service Calls**: Fixed async service calls using `async_add_job` instead of `async_create_task`
+- **Sensor State Updates**: Improved sensor state updates for better counter tracking
+- **Error Logging**: Enhanced error logging for better debugging of counter issues
+- **Code Quality**: Added comprehensive testing scripts for validation without Home Assistant
+
+### Technical Improvements
+- Updated `_track_message_sent()` method with proper async patterns
+- Added helper methods `_get_sensor_current_value()` and `_get_sensor_attr()`
+- Improved error handling for counter updates
+- Added `test_integration.py` for validation without Home Assistant dependencies
+- Added `release_checklist.py` for release preparation
+
+### Testing
+- Added comprehensive validation script that tests file structure, syntax, and logic
+- Added release checklist to ensure all components are ready for release
+- Improved code formatting and quality checks
+
 ## [1.3.0] - 2025-01-XX
 
 ### Added
