@@ -12,7 +12,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.NOTIFY]
+PLATFORMS: list[Platform] = [Platform.NOTIFY, Platform.SENSOR]
 
 _LOGGER.info("GoTo SMS integration loaded")
 
