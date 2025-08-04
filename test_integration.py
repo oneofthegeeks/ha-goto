@@ -195,7 +195,7 @@ def test_authentication_persistence():
             'while retry_count < max_retries:',  # Retry loop
             'timedelta(minutes=5)',  # Less aggressive token validation
             'Exponential backoff',  # Backoff strategy
-            'time.sleep(2**retry_count)',  # Exponential backoff implementation
+            'await asyncio.sleep(2**retry_count)',  # Async exponential backoff implementation
         ]
         
         all_found = True
@@ -206,8 +206,8 @@ def test_authentication_persistence():
                 print(f"❌ Missing improvement: {improvement}")
                 all_found = False
         
-        # Check for better error handling
-        if 'response.status_code in [401, 400]' in content:
+        # Check for better error handling (updated for async)
+        if 'response.status in [401, 400]' in content:
             print("✅ Found improved error handling for invalid refresh tokens")
         else:
             print("❌ Missing improved error handling")
@@ -218,6 +218,13 @@ def test_authentication_persistence():
             print("✅ Found improved debug logging")
         else:
             print("❌ Missing improved debug logging")
+            all_found = False
+        
+        # Check for async HTTP client usage
+        if 'async_get_clientsession' in content:
+            print("✅ Found async HTTP client usage")
+        else:
+            print("❌ Missing async HTTP client usage")
             all_found = False
         
         return all_found
