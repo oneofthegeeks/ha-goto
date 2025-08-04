@@ -5,6 +5,28 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.5] - 2025-01-04
+
+### Fixed
+- **Event Loop Blocking**: Fixed blocking HTTP requests that were causing event loop warnings
+- **Async HTTP Client**: Converted all HTTP requests to use Home Assistant's async HTTP client
+- **Token Refresh**: Fixed async/await patterns in token refresh operations
+- **SMS Sending**: Converted SMS sending to use async HTTP requests
+- **Thread Safety**: Eliminated all blocking operations in async contexts
+
+### Technical Improvements
+- **Async Token Refresh**: `refresh_tokens()` method now properly async
+- **Async SMS Sending**: `_send_sms()` method now uses async HTTP client
+- **Async Headers**: `get_headers()` method now properly async
+- **Async Token Validation**: `get_valid_token()` method now properly async
+- **Home Assistant HTTP Client**: Using `async_get_clientsession()` instead of `requests`
+
+### Performance Improvements
+- **No More Blocking**: Eliminated all blocking HTTP requests in async contexts
+- **Better Error Handling**: Improved error handling for network operations
+- **Proper Async Patterns**: All async operations now follow Home Assistant best practices
+- **Event Loop Friendly**: Integration no longer blocks the Home Assistant event loop
+
 ## [1.3.4] - 2025-01-04
 
 ### Fixed

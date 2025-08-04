@@ -79,10 +79,8 @@ class GoToSMSNotificationService(BaseNotificationService):
         # Render template if message contains template syntax
         rendered_message = await self._render_template(message, kwargs.get("data", {}))
 
-        # Run the SMS sending in a thread to avoid blocking
-        await self.hass.async_add_executor_job(
-            self._send_sms, rendered_message, target, sender_id
-        )
+        # Call the async SMS sending method directly
+        await self._send_sms(rendered_message, target, sender_id)
 
     async def async_send_message_service(self, call) -> None:
         """Handle the service call for sending SMS."""
@@ -102,10 +100,8 @@ class GoToSMSNotificationService(BaseNotificationService):
         # Render template if message contains template syntax
         rendered_message = await self._render_template(message, template_data)
 
-        # Run the SMS sending in a thread to avoid blocking
-        await self.hass.async_add_executor_job(
-            self._send_sms, rendered_message, target, sender_id
-        )
+        # Call the async SMS sending method directly
+        await self._send_sms(rendered_message, target, sender_id)
 
     async def _render_template(
         self, message: str, template_data: Dict[str, Any]
@@ -136,7 +132,7 @@ class GoToSMSNotificationService(BaseNotificationService):
             _LOGGER.error("Unexpected error during template rendering: %s", e)
             return message
 
-    def _send_sms(self, message: str, target: str, sender_id: str) -> None:
+    async def _send_sms(self, message: str, target: str, sender_id: str) -> None:
         """Send SMS message via GoTo Connect API."""
         max_retries = 2
         retry_count = 0
@@ -148,7 +144,7 @@ class GoToSMSNotificationService(BaseNotificationService):
                     retry_count + 1,
                     max_retries + 1,
                 )
-                headers = self.oauth_manager.get_headers()
+                headers = await self.oauth_manager.get_headers()
                 if not headers:
                     _LOGGER.error("Failed to get valid authentication headers")
                     _LOGGER.error("Re-authentication has been triggered automatically")
@@ -170,68 +166,71 @@ class GoToSMSNotificationService(BaseNotificationService):
                     message[:50] + "..." if len(message) > 50 else message,
                 )
 
-                response = requests.post(
+                # Use Home Assistant's async HTTP client
+                from homeassistant.helpers.aiohttp_client import async_get_clientsession
+                session = async_get_clientsession(self.hass)
+
+                async with session.post(
                     url,
                     headers=headers,
                     json=payload,
                     timeout=30,
-                )
+                ) as response:
+                    if response.status in [200, 201]:
+                        _LOGGER.info("SMS sent successfully to %s", target)
+                        return  # Success, exit the retry loop
 
-                if response.status_code in [200, 201]:
-                    _LOGGER.info("SMS sent successfully to %s", target)
-                    return  # Success, exit the retry loop
+                    elif response.status == 401:
+                        _LOGGER.warning(
+                            "Authentication failed (attempt %d/%d). Token may be expired.",
+                            retry_count + 1,
+                            max_retries + 1,
+                        )
 
-                elif response.status_code == 401:
-                    _LOGGER.warning(
-                        "Authentication failed (attempt %d/%d). Token may be expired.",
-                        retry_count + 1,
-                        max_retries + 1,
-                    )
-
-                    if retry_count < max_retries:
-                        _LOGGER.info("Attempting to refresh tokens and retry...")
-                        if self.oauth_manager.refresh_tokens():
-                            _LOGGER.info("Token refresh successful, retrying SMS send...")
-                            retry_count += 1
-                            continue  # Retry with fresh tokens
+                        if retry_count < max_retries:
+                            _LOGGER.info("Attempting to refresh tokens and retry...")
+                            if await self.oauth_manager.refresh_tokens():
+                                _LOGGER.info("Token refresh successful, retrying SMS send...")
+                                retry_count += 1
+                                continue  # Retry with fresh tokens
+                            else:
+                                _LOGGER.error("Token refresh failed")
+                                break  # Don't retry if refresh failed
                         else:
-                            _LOGGER.error("Token refresh failed")
-                            break  # Don't retry if refresh failed
+                            _LOGGER.error("All authentication attempts failed")
+                            _LOGGER.error("Re-authentication has been triggered automatically")
+                            return
+
+                    elif response.status == 429:  # Rate limited
+                        _LOGGER.warning(
+                            "Rate limited by GoTo API (attempt %d/%d)",
+                            retry_count + 1,
+                            max_retries + 1,
+                        )
+                        if retry_count < max_retries:
+                            import asyncio
+                            wait_time = 2 ** (
+                                retry_count + 1
+                            )  # Exponential backoff: 2s, 4s
+                            _LOGGER.info("Waiting %d seconds before retry...", wait_time)
+                            await asyncio.sleep(wait_time)
+                            retry_count += 1
+                            continue
+                        else:
+                            _LOGGER.error("Rate limit exceeded after all retries")
+                            return
+
                     else:
-                        _LOGGER.error("All authentication attempts failed")
-                        _LOGGER.error("Re-authentication has been triggered automatically")
-                        return
+                        response_text = await response.text()
+                        _LOGGER.error(
+                            "Failed to send SMS. Status: %d, Response: %s",
+                            response.status,
+                            response_text,
+                        )
+                        # For other errors, don't retry unless it's a network issue
+                        break
 
-                elif response.status_code == 429:  # Rate limited
-                    _LOGGER.warning(
-                        "Rate limited by GoTo API (attempt %d/%d)",
-                        retry_count + 1,
-                        max_retries + 1,
-                    )
-                    if retry_count < max_retries:
-                        import time
-
-                        wait_time = 2 ** (
-                            retry_count + 1
-                        )  # Exponential backoff: 2s, 4s
-                        _LOGGER.info("Waiting %d seconds before retry...", wait_time)
-                        time.sleep(wait_time)
-                        retry_count += 1
-                        continue
-                    else:
-                        _LOGGER.error("Rate limit exceeded after all retries")
-                        return
-
-                else:
-                    _LOGGER.error(
-                        "Failed to send SMS. Status: %d, Response: %s",
-                        response.status_code,
-                        response.text,
-                    )
-                    # For other errors, don't retry unless it's a network issue
-                    break
-
-            except requests.exceptions.RequestException as e:
+            except Exception as e:
                 _LOGGER.error(
                     "Network error while sending SMS (attempt %d/%d): %s",
                     retry_count + 1,
@@ -239,24 +238,14 @@ class GoToSMSNotificationService(BaseNotificationService):
                     e,
                 )
                 if retry_count < max_retries:
-                    import time
-
+                    import asyncio
                     wait_time = 2 ** (retry_count + 1)  # Exponential backoff
                     _LOGGER.info("Waiting %d seconds before retry...", wait_time)
-                    time.sleep(wait_time)
+                    await asyncio.sleep(wait_time)
                     retry_count += 1
                     continue
                 else:
                     _LOGGER.error("Network error persisted after all retries")
                     return
-
-            except Exception as e:
-                _LOGGER.error(
-                    "Unexpected error while sending SMS (attempt %d/%d): %s",
-                    retry_count + 1,
-                    max_retries + 1,
-                    e,
-                )
-                break  # Don't retry for unexpected errors
 
         _LOGGER.error("Failed to send SMS after all retry attempts")
