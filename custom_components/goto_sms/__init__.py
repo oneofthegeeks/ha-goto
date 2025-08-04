@@ -49,12 +49,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if oauth_manager.refresh_tokens():
                     _LOGGER.info("Startup token refresh successful")
                 else:
-                    _LOGGER.warning("Startup token refresh failed")
+                    _LOGGER.warning("Startup token refresh failed - will retry on next use")
             else:
                 _LOGGER.info("Tokens are valid on startup")
 
         except Exception as e:
             _LOGGER.error("Error during startup token validation: %s", e)
+            # Don't fail the integration startup, just log the error
 
     # Run startup validation after a short delay to ensure everything is loaded
     hass.async_create_task(
@@ -91,7 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             # Load tokens if not already loaded
             if not oauth_manager._tokens:
                 if not oauth_manager.load_tokens():
-                    _LOGGER.warning("No tokens available for periodic refresh")
+                    _LOGGER.debug("No tokens available for periodic refresh")
                     return
 
             # Check if tokens need refresh (using the same validation logic)
@@ -100,12 +101,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if oauth_manager.refresh_tokens():
                     _LOGGER.info("Periodic token refresh successful")
                 else:
-                    _LOGGER.warning("Periodic token refresh failed")
+                    _LOGGER.warning("Periodic token refresh failed - will retry on next use")
             else:
                 _LOGGER.debug("Tokens are still valid, no refresh needed")
 
         except Exception as e:
             _LOGGER.error("Error during periodic token refresh: %s", e)
+            # Don't fail the periodic refresh, just log the error
 
     # Run token refresh every 30 minutes
     entry.async_on_unload(
