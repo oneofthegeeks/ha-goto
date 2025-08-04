@@ -151,13 +151,8 @@ class GoToSMSNotificationService(BaseNotificationService):
                 headers = self.oauth_manager.get_headers()
                 if not headers:
                     _LOGGER.error("Failed to get valid authentication headers")
-                    _LOGGER.error(
-                        "This may indicate expired tokens or configuration issues"
-                    )
                     _LOGGER.error("Re-authentication has been triggered automatically")
-                    _LOGGER.error(
-                        "Please check your Home Assistant UI for re-authentication prompts"
-                    )
+                    _LOGGER.error("Please check your Home Assistant UI for re-authentication prompts")
                     return
 
                 # Prepare the SMS payload according to GoTo Connect API specification
@@ -196,9 +191,7 @@ class GoToSMSNotificationService(BaseNotificationService):
                     if retry_count < max_retries:
                         _LOGGER.info("Attempting to refresh tokens and retry...")
                         if self.oauth_manager.refresh_tokens():
-                            _LOGGER.info(
-                                "Token refresh successful, retrying SMS send..."
-                            )
+                            _LOGGER.info("Token refresh successful, retrying SMS send...")
                             retry_count += 1
                             continue  # Retry with fresh tokens
                         else:
@@ -206,12 +199,7 @@ class GoToSMSNotificationService(BaseNotificationService):
                             break  # Don't retry if refresh failed
                     else:
                         _LOGGER.error("All authentication attempts failed")
-                        _LOGGER.error(
-                            "Re-authentication has been triggered automatically"
-                        )
-                        _LOGGER.error(
-                            "Please check your Home Assistant UI for re-authentication prompts"
-                        )
+                        _LOGGER.error("Re-authentication has been triggered automatically")
                         return
 
                 elif response.status_code == 429:  # Rate limited

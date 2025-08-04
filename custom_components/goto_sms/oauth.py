@@ -108,19 +108,19 @@ class GoToOAuth2Manager:
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
 
-            # Use the proper async pattern - create a task that will be properly awaited
-            # This ensures we're in the main event loop and avoids thread safety issues
-            async def update_config_async():
+            # Use the proper async pattern with callback to avoid thread safety issues
+            def update_config_sync():
                 try:
+                    # This will be called in the executor thread
                     self.hass.config_entries.async_update_entry(
                         self.config_entry, data=data
                     )
+                    _LOGGER.info("Tokens saved successfully")
                 except Exception as e:
                     _LOGGER.error("Failed to update config entry: %s", e)
 
-            # Schedule the async function properly
-            self.hass.async_create_task(update_config_async())
-            _LOGGER.info("Tokens scheduled for saving")
+            # Schedule the sync function in the executor
+            self.hass.async_add_executor_job(update_config_sync)
             return True
         except Exception as e:
             _LOGGER.error("Failed to schedule token saving: %s", e)
@@ -159,7 +159,7 @@ class GoToOAuth2Manager:
             _LOGGER.info("No expiration time found")
             return False
 
-        # Check if token expires within the next 15 minutes (very aggressive refresh)
+        # Check if token expires within the next 5 minutes (less aggressive)
         try:
             expiry_time = datetime.fromisoformat(expires_at)
             current_time = datetime.now()
@@ -172,11 +172,11 @@ class GoToOAuth2Manager:
                 time_until_expiry,
             )
 
-            # Token is valid if it expires more than 15 minutes from now
-            # This gives us plenty of time to refresh proactively
-            if time_until_expiry <= timedelta(minutes=15):
+            # Token is valid if it expires more than 5 minutes from now
+            # This gives us time to refresh without being too aggressive
+            if time_until_expiry <= timedelta(minutes=5):
                 _LOGGER.info(
-                    "Token expires within 15 minutes - will refresh proactively"
+                    "Token expires within 5 minutes - will refresh proactively"
                 )
                 return False
 
@@ -360,15 +360,24 @@ class GoToOAuth2Manager:
                 if response.status_code == 200:
                     token_data = response.json()
 
-                    self._tokens = {
+                    # Update tokens with new data
+                    new_tokens = {
                         CONF_ACCESS_TOKEN: token_data["access_token"],
-                        CONF_REFRESH_TOKEN: token_data.get(
-                            "refresh_token", self._tokens[CONF_REFRESH_TOKEN]
-                        ),
                         CONF_TOKEN_EXPIRES_AT: (
                             datetime.now() + timedelta(seconds=token_data["expires_in"])
                         ).isoformat(),
                     }
+                    
+                    # Only update refresh token if a new one is provided
+                    if "refresh_token" in token_data:
+                        new_tokens[CONF_REFRESH_TOKEN] = token_data["refresh_token"]
+                        _LOGGER.info("New refresh token received")
+                    else:
+                        # Keep the existing refresh token if no new one provided
+                        new_tokens[CONF_REFRESH_TOKEN] = self._tokens[CONF_REFRESH_TOKEN]
+                        _LOGGER.info("Using existing refresh token")
+
+                    self._tokens = new_tokens
 
                     _LOGGER.info("Tokens refreshed successfully")
                     return self.save_tokens()
@@ -410,13 +419,12 @@ class GoToOAuth2Manager:
     def get_valid_token(self) -> Optional[str]:
         """Get a valid access token, refreshing if necessary."""
         _LOGGER.debug("get_valid_token() called")
-        _LOGGER.info("Getting valid token. Current tokens: %s", self._tokens)
 
         if not self._tokens:
             _LOGGER.info("No tokens in memory, attempting to load from config entry")
             if not self.load_tokens():
                 _LOGGER.error("Failed to load tokens from config entry")
-                # Try to trigger re-authentication if we can't load tokens
+                # Only trigger re-authentication if we have a config entry and no tokens at all
                 if self.config_entry:
                     _LOGGER.warning(
                         "Triggering re-authentication due to missing tokens"
@@ -424,7 +432,7 @@ class GoToOAuth2Manager:
                     self._trigger_reauth()
                 return None
 
-        # Always try to refresh if tokens are close to expiring
+        # Check if tokens need refresh
         if not self._validate_tokens():
             _LOGGER.info("Token validation failed, attempting refresh")
             if not self.refresh_tokens():
@@ -442,7 +450,7 @@ class GoToOAuth2Manager:
                 self._trigger_reauth()
             return None
 
-        _LOGGER.info("Returning valid token")
+        _LOGGER.debug("Returning valid token")
         return token
 
     def get_headers(self) -> Dict[str, str]:
@@ -450,12 +458,7 @@ class GoToOAuth2Manager:
         _LOGGER.debug("get_headers() called")
         token = self.get_valid_token()
         if not token:
-            _LOGGER.error("No valid token available. Tokens: %s", self._tokens)
-            _LOGGER.error(
-                "Config entry data: %s",
-                self.config_entry.data if self.config_entry else "None",
-            )
-
+            _LOGGER.error("No valid token available for headers")
             # Trigger re-authentication if we have a config entry
             if self.config_entry:
                 _LOGGER.info("Triggering re-authentication flow")
@@ -463,7 +466,7 @@ class GoToOAuth2Manager:
 
             return {}
 
-        _LOGGER.info("Got valid token, creating headers")
+        _LOGGER.debug("Got valid token, creating headers")
         return {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",

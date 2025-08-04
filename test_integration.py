@@ -133,21 +133,20 @@ def test_yaml_files():
     return all_valid
 
 def test_notify_logic():
-    """Test notify logic without Home Assistant."""
+    """Test notify logic improvements."""
     print("\n🔍 Testing notify logic...")
     
     try:
-        # Test the OAuth manager logic by reading the file and checking for key improvements
-        with open('custom_components/goto_sms/oauth.py', 'r') as f:
+        # Read the notify.py file and check for the improvements
+        with open('custom_components/goto_sms/notify.py', 'r') as f:
             content = f.read()
         
-        # Check for the authentication persistence improvements
+        # Check for the key improvements we made
         improvements = [
-            'max_retries = 3',
-            'retry_count = 0',
-            'while retry_count < max_retries:',
-            'timedelta(minutes=15)',
-            'Exponential backoff',
+            'max_retries = 2',  # Retry logic
+            'retry_count = 0',  # Retry counter
+            'while retry_count <= max_retries:',  # Retry loop
+            'Exponential backoff',  # Backoff strategy
         ]
         
         all_found = True
@@ -158,7 +157,7 @@ def test_notify_logic():
                 print(f"❌ Missing improvement: {improvement}")
                 all_found = False
         
-        # Check for periodic refresh in __init__.py
+        # Check for periodic token refresh
         with open('custom_components/goto_sms/__init__.py', 'r') as f:
             init_content = f.read()
         
@@ -194,7 +193,7 @@ def test_authentication_persistence():
             'max_retries = 3',  # Retry logic
             'retry_count = 0',  # Retry counter
             'while retry_count < max_retries:',  # Retry loop
-            'timedelta(minutes=15)',  # Aggressive token validation
+            'timedelta(minutes=5)',  # Less aggressive token validation
             'Exponential backoff',  # Backoff strategy
             'time.sleep(2**retry_count)',  # Exponential backoff implementation
         ]
