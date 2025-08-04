@@ -148,7 +148,7 @@ def test_notify_logic():
             'retry_count = 0',
             'while retry_count < max_retries:',
             'timedelta(minutes=15)',
-            'exponential backoff',
+            'Exponential backoff',
         ]
         
         all_found = True
@@ -196,7 +196,7 @@ def test_authentication_persistence():
             'retry_count = 0',  # Retry counter
             'while retry_count < max_retries:',  # Retry loop
             'timedelta(minutes=15)',  # Aggressive token validation
-            'exponential backoff',  # Backoff strategy
+            'Exponential backoff',  # Backoff strategy
             'time.sleep(2 ** retry_count)',  # Exponential backoff implementation
         ]
         
