@@ -5,6 +5,26 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.7] - 2025-01-04
+
+### Fixed
+- **Thread Safety**: Fixed "Detected code that calls hass.config_entries.async_update_entry from a thread" error
+- **Async Config Entry Updates**: Converted save_tokens to async to avoid thread safety issues
+- **Async Token Fetching**: Converted fetch_token to async for proper async/await patterns
+- **Config Flow Updates**: Updated config flow to handle async fetch_token calls
+
+### Technical Improvements
+- **Async save_tokens**: `save_tokens()` method now properly async and updates config entries in main event loop
+- **Async fetch_token**: `fetch_token()` method now async and uses Home Assistant's HTTP client
+- **Config Flow**: Updated to call async methods directly instead of using executor jobs
+- **Thread Safety**: All config entry updates now happen in the main event loop
+
+### What This Fixes
+- ✅ **No more thread safety warnings** in Home Assistant logs
+- ✅ **Proper async/await patterns** for all token operations
+- ✅ **Thread-safe config entry updates** that won't cause Home Assistant crashes
+- ✅ **Consistent async behavior** throughout the integration
+
 ## [1.3.6] - 2025-01-04
 
 ### Fixed
