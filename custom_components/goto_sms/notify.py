@@ -272,5 +272,3 @@ class GoToSMSNotificationService(BaseNotificationService):
                 break  # Don't retry for unexpected errors
 
         _LOGGER.error("Failed to send SMS after all retry attempts")
-
-
