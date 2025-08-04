@@ -5,6 +5,26 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.6] - 2025-01-04
+
+### Fixed
+- **Async Coroutine Warning**: Fixed "coroutine was never awaited" warning in load_tokens method
+- **Async Consistency**: Made load_tokens method async to properly handle async refresh_tokens calls
+- **Startup Validation**: Fixed async calls in startup token validation
+- **Periodic Refresh**: Fixed async calls in periodic token refresh
+
+### Technical Improvements
+- **Async load_tokens**: `load_tokens()` method now properly async
+- **Consistent Async Pattern**: All token-related methods now follow proper async/await patterns
+- **Startup Robustness**: Startup validation now properly handles async token loading
+- **Periodic Refresh**: Periodic refresh now properly handles async token loading
+
+### What This Fixes
+- ✅ **No more "coroutine was never awaited" warnings**
+- ✅ **Proper async/await patterns throughout the integration**
+- ✅ **Consistent async behavior** for all token operations
+- ✅ **Reliable startup and periodic refresh** operations
+
 ## [1.3.5] - 2025-01-04
 
 ### Fixed
