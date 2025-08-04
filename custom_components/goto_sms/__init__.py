@@ -39,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.info("Running startup token validation")
 
             # Load tokens
-            if not oauth_manager.load_tokens():
+            if not await oauth_manager.load_tokens():
                 _LOGGER.warning("No tokens found during startup validation")
                 return
 
@@ -91,7 +91,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             # Load tokens if not already loaded
             if not oauth_manager._tokens:
-                if not oauth_manager.load_tokens():
+                if not await oauth_manager.load_tokens():
                     _LOGGER.debug("No tokens available for periodic refresh")
                     return
 

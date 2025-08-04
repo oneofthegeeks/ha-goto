@@ -54,7 +54,7 @@ class GoToOAuth2Manager:
         )
         self._tokens = {}
 
-    def load_tokens(self) -> bool:
+    async def load_tokens(self) -> bool:
         """Load tokens from config entry."""
         try:
             _LOGGER.debug("load_tokens() called")
@@ -83,7 +83,7 @@ class GoToOAuth2Manager:
             if not self._validate_tokens():
                 _LOGGER.warning("Invalid or expired tokens found")
                 _LOGGER.warning("Attempting to refresh tokens...")
-                if not self.refresh_tokens():
+                if not await self.refresh_tokens():
                     _LOGGER.error(
                         "Failed to refresh tokens. Re-authentication required."
                     )
@@ -424,7 +424,7 @@ class GoToOAuth2Manager:
 
         if not self._tokens:
             _LOGGER.info("No tokens in memory, attempting to load from config entry")
-            if not self.load_tokens():
+            if not await self.load_tokens():
                 _LOGGER.error("Failed to load tokens from config entry")
                 # Only trigger re-authentication if we have a config entry and no tokens at all
                 if self.config_entry:
