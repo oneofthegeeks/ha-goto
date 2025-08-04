@@ -97,7 +97,7 @@ class GoToOAuth2Manager:
             _LOGGER.error("Failed to load tokens: %s", e)
             return False
 
-    def save_tokens(self) -> bool:
+    async def save_tokens(self) -> bool:
         """Save tokens to config entry."""
         try:
             if self.config_entry is None:
@@ -108,22 +108,12 @@ class GoToOAuth2Manager:
             data = dict(self.config_entry.data)
             data["tokens"] = self._tokens
 
-            # Use the proper async pattern with callback to avoid thread safety issues
-            def update_config_sync():
-                try:
-                    # This will be called in the executor thread
-                    self.hass.config_entries.async_update_entry(
-                        self.config_entry, data=data
-                    )
-                    _LOGGER.info("Tokens saved successfully")
-                except Exception as e:
-                    _LOGGER.error("Failed to update config entry: %s", e)
-
-            # Schedule the sync function in the executor
-            self.hass.async_add_executor_job(update_config_sync)
+            # Update the config entry directly in the main event loop
+            self.hass.config_entries.async_update_entry(self.config_entry, data=data)
+            _LOGGER.info("Tokens saved successfully")
             return True
         except Exception as e:
-            _LOGGER.error("Failed to schedule token saving: %s", e)
+            _LOGGER.error("Failed to save tokens: %s", e)
             return False
 
     async def _async_update_config_entry(self, data):
@@ -209,7 +199,7 @@ class GoToOAuth2Manager:
         _LOGGER.info("Generated authorization URL: %s", auth_url)
         return auth_url
 
-    def fetch_token(self, authorization_response: str) -> bool:
+    async def fetch_token(self, authorization_response: str) -> bool:
         """Fetch tokens using authorization response."""
         try:
             import base64
@@ -276,8 +266,12 @@ class GoToOAuth2Manager:
                 "redirect_uri": "https://home-assistant.io/auth/callback",
             }
 
-            # Make the token request
-            response = requests.post(
+            # Use Home Assistant's async HTTP client
+            from homeassistant.helpers.aiohttp_client import async_get_clientsession
+            session = async_get_clientsession(self.hass)
+
+            # Make the token request asynchronously
+            async with session.post(
                 OAUTH2_TOKEN_URL,
                 headers={
                     "Authorization": f"Basic {encoded_credentials}",
@@ -286,31 +280,31 @@ class GoToOAuth2Manager:
                 },
                 data=data,
                 timeout=30,
-            )
+            ) as response:
+                if response.status != 200:
+                    response_text = await response.text()
+                    _LOGGER.error(
+                        "Token request failed: %d - %s", response.status, response_text
+                    )
+                    return False
 
-            if response.status_code != 200:
-                _LOGGER.error(
-                    "Token request failed: %d - %s", response.status_code, response.text
-                )
-                return False
+                token_data = await response.json()
 
-            token_data = response.json()
+                self._tokens = {
+                    CONF_ACCESS_TOKEN: token_data["access_token"],
+                    CONF_REFRESH_TOKEN: token_data["refresh_token"],
+                    CONF_TOKEN_EXPIRES_AT: (
+                        datetime.now() + timedelta(seconds=token_data["expires_in"])
+                    ).isoformat(),
+                }
 
-            self._tokens = {
-                CONF_ACCESS_TOKEN: token_data["access_token"],
-                CONF_REFRESH_TOKEN: token_data["refresh_token"],
-                CONF_TOKEN_EXPIRES_AT: (
-                    datetime.now() + timedelta(seconds=token_data["expires_in"])
-                ).isoformat(),
-            }
-
-            # Only try to save tokens if we have a config entry
-            if self.config_entry is not None:
-                return self.save_tokens()
-            else:
-                # During setup, just store tokens in memory
-                _LOGGER.info("Tokens fetched successfully during setup")
-                return True
+                # Only try to save tokens if we have a config entry
+                if self.config_entry is not None:
+                    return await self.save_tokens()
+                else:
+                    # During setup, just store tokens in memory
+                    _LOGGER.info("Tokens fetched successfully during setup")
+                    return True
 
         except Exception as e:
             _LOGGER.error("Failed to fetch tokens: %s", e)
@@ -383,7 +377,7 @@ class GoToOAuth2Manager:
                         self._tokens = new_tokens
 
                         _LOGGER.info("Tokens refreshed successfully")
-                        return self.save_tokens()
+                        return await self.save_tokens()
                     else:
                         response_text = await response.text()
                         _LOGGER.warning(

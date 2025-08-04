@@ -91,9 +91,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if not authorization_response:
                     raise HomeAssistantError("No authorization response received")
 
-                success = await self.hass.async_add_executor_job(
-                    self.oauth_manager.fetch_token, authorization_response
-                )
+                success = await self.oauth_manager.fetch_token(authorization_response)
 
                 if success:
                     # Create the config entry with tokens
@@ -202,9 +200,7 @@ Copy the entire URL and paste it below.
                 if not authorization_response:
                     raise HomeAssistantError("No authorization response received")
 
-                success = await self.hass.async_add_executor_job(
-                    self.oauth_manager.fetch_token, authorization_response
-                )
+                success = await self.oauth_manager.fetch_token(authorization_response)
 
                 if success:
                     # Update the existing config entry with new tokens
