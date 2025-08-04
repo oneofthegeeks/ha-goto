@@ -197,7 +197,7 @@ def test_authentication_persistence():
             'while retry_count < max_retries:',  # Retry loop
             'timedelta(minutes=15)',  # Aggressive token validation
             'Exponential backoff',  # Backoff strategy
-            'time.sleep(2 ** retry_count)',  # Exponential backoff implementation
+            'time.sleep(2**retry_count)',  # Exponential backoff implementation
         ]
         
         all_found = True
