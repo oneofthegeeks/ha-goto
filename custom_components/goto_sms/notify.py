@@ -185,8 +185,8 @@ class GoToSMSNotificationService(BaseNotificationService):
                 if response.status_code in [200, 201]:
                     _LOGGER.info("SMS sent successfully to %s", target)
 
-                    # Track the message using both methods
-                    self._track_message_sent()
+                    # Track the message using both methods - schedule async tracking
+                    self.hass.async_create_task(self._async_track_message_sent())
                     return  # Success, exit the retry loop
 
                 elif response.status_code == 401:
@@ -276,25 +276,23 @@ class GoToSMSNotificationService(BaseNotificationService):
 
         _LOGGER.error("Failed to send SMS after all retry attempts")
 
-    def _track_message_sent(self) -> None:
+    async def _async_track_message_sent(self) -> None:
         """Track that a message was sent using both tracking methods."""
         try:
             # Method 1: Update input_number if it exists
             try:
                 current_count = self._get_input_number_count()
                 if current_count is not None:
-                    # Use async_create_task to properly schedule the service call
-                    self.hass.async_create_task(
-                        self.hass.services.async_call(
-                            "input_number",
-                            "set_value",
-                            {
-                                "entity_id": "input_number.sms_messages_sent",
-                                "value": current_count + 1,
-                            },
-                        )
+                    # Call the service directly since we're already in async context
+                    await self.hass.services.async_call(
+                        "input_number",
+                        "set_value",
+                        {
+                            "entity_id": "input_number.sms_messages_sent",
+                            "value": current_count + 1,
+                        },
                     )
-                    _LOGGER.info("Scheduled input_number SMS counter update")
+                    _LOGGER.info("Updated input_number SMS counter")
             except Exception as e:
                 _LOGGER.error(f"Failed to update input_number counter: {e}")
 
@@ -302,33 +300,31 @@ class GoToSMSNotificationService(BaseNotificationService):
             try:
                 sensor_entity_id = self._find_sms_sensor()
                 if sensor_entity_id:
-                    # Use async_create_task to update the sensor state
-                    self.hass.async_create_task(
-                        self.hass.states.async_set(
-                            sensor_entity_id,
-                            self._get_sensor_current_value(sensor_entity_id) + 1,
-                            {
-                                "daily_count": self._get_sensor_attr(
-                                    sensor_entity_id, "daily_count", 0
-                                )
-                                + 1,
-                                "weekly_count": self._get_sensor_attr(
-                                    sensor_entity_id, "weekly_count", 0
-                                )
-                                + 1,
-                                "monthly_count": self._get_sensor_attr(
-                                    sensor_entity_id, "monthly_count", 0
-                                )
-                                + 1,
-                                "total_count": self._get_sensor_attr(
-                                    sensor_entity_id, "total_count", 0
-                                )
-                                + 1,
-                                "last_reset": datetime.now().date().isoformat(),
-                            },
-                        )
+                    # Update the sensor state directly since we're already in async context
+                    await self.hass.states.async_set(
+                        sensor_entity_id,
+                        self._get_sensor_current_value(sensor_entity_id) + 1,
+                        {
+                            "daily_count": self._get_sensor_attr(
+                                sensor_entity_id, "daily_count", 0
+                            )
+                            + 1,
+                            "weekly_count": self._get_sensor_attr(
+                                sensor_entity_id, "weekly_count", 0
+                            )
+                            + 1,
+                            "monthly_count": self._get_sensor_attr(
+                                sensor_entity_id, "monthly_count", 0
+                            )
+                            + 1,
+                            "total_count": self._get_sensor_attr(
+                                sensor_entity_id, "total_count", 0
+                            )
+                            + 1,
+                            "last_reset": datetime.now().date().isoformat(),
+                        },
                     )
-                    _LOGGER.info("Scheduled SMS sensor counter update")
+                    _LOGGER.info("Updated SMS sensor counter")
             except Exception as e:
                 _LOGGER.error(f"Failed to update SMS sensor counter: {e}")
 
