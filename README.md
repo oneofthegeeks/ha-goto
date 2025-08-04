@@ -18,9 +18,9 @@ A custom Home Assistant integration that allows you to send SMS messages using t
 
 ## SMS Message Tracking
 
-The integration includes automatic message tracking capabilities. You can monitor your SMS usage through your Home Assistant dashboard using two methods:
+You can manually track SMS messages by incrementing a counter in your automations. Here's how to set it up:
 
-### Option 1: Simple Input Number (Recommended for Beginners)
+### Simple Input Number Tracking
 
 Add to your `configuration.yaml`:
 ```yaml
@@ -34,14 +34,31 @@ input_number:
     unit_of_measurement: "messages"
 ```
 
-### Option 2: Advanced Sensor (Automatic)
+### Automation Example
 
-The integration automatically creates a sensor with detailed tracking:
-- Daily, weekly, monthly, and total message counts
-- Automatic counter resets
-- Persistent storage across restarts
+```yaml
+automation:
+  - alias: "Send SMS and track count"
+    trigger:
+      platform: state
+      entity_id: binary_sensor.motion_sensor
+      to: "on"
+    action:
+      # Send the SMS
+      - service: goto_sms.send_sms
+        data:
+          message: "Motion detected!"
+          target: "+1234567890"
+          sender_id: "+1234567890"
+      
+      # Increment the counter
+      - service: input_number.set_value
+        data:
+          entity_id: input_number.sms_messages_sent
+          value: "{{ states('input_number.sms_messages_sent') | int + 1 }}"
+```
 
-### Dashboard Examples
+### Dashboard Example
 
 ```yaml
 # Simple statistics card
@@ -50,11 +67,7 @@ title: "SMS Statistics"
 entities:
   - entity: input_number.sms_messages_sent
     name: "Total SMS Sent"
-  - entity: sensor.sms_messages_sent
-    name: "Advanced SMS Counter"
 ```
-
-For detailed tracking documentation, see [SMS_TRACKING.md](SMS_TRACKING.md).
 
 ## Installation
 

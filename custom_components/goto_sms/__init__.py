@@ -16,7 +16,7 @@ from .oauth import GoToOAuth2Manager
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.NOTIFY, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.NOTIFY]
 
 _LOGGER.info("GoTo SMS integration loaded")
 
