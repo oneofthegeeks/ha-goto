@@ -268,6 +268,7 @@ class GoToOAuth2Manager:
 
             # Use Home Assistant's async HTTP client
             from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
             session = async_get_clientsession(self.hass)
 
             # Make the token request asynchronously
@@ -341,6 +342,7 @@ class GoToOAuth2Manager:
 
                 # Use Home Assistant's async HTTP client
                 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
                 session = async_get_clientsession(self.hass)
 
                 # Make the token refresh request asynchronously
@@ -361,17 +363,20 @@ class GoToOAuth2Manager:
                         new_tokens = {
                             CONF_ACCESS_TOKEN: token_data["access_token"],
                             CONF_TOKEN_EXPIRES_AT: (
-                                datetime.now() + timedelta(seconds=token_data["expires_in"])
+                                datetime.now()
+                                + timedelta(seconds=token_data["expires_in"])
                             ).isoformat(),
                         }
-                        
+
                         # Only update refresh token if a new one is provided
                         if "refresh_token" in token_data:
                             new_tokens[CONF_REFRESH_TOKEN] = token_data["refresh_token"]
                             _LOGGER.info("New refresh token received")
                         else:
                             # Keep the existing refresh token if no new one provided
-                            new_tokens[CONF_REFRESH_TOKEN] = self._tokens[CONF_REFRESH_TOKEN]
+                            new_tokens[CONF_REFRESH_TOKEN] = self._tokens[
+                                CONF_REFRESH_TOKEN
+                            ]
                             _LOGGER.info("Using existing refresh token")
 
                         self._tokens = new_tokens
@@ -396,7 +401,10 @@ class GoToOAuth2Manager:
                         retry_count += 1
                         if retry_count < max_retries:
                             import asyncio
-                            await asyncio.sleep(2**retry_count)  # Exponential backoff: 2s, 4s, 8s
+
+                            await asyncio.sleep(
+                                2**retry_count
+                            )  # Exponential backoff: 2s, 4s, 8s
 
             except Exception as e:
                 _LOGGER.error(
@@ -405,6 +413,7 @@ class GoToOAuth2Manager:
                 retry_count += 1
                 if retry_count < max_retries:
                     import asyncio
+
                     await asyncio.sleep(2**retry_count)  # Exponential backoff
 
         # If we get here, all retries failed

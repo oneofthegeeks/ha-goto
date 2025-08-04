@@ -49,7 +49,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if await oauth_manager.refresh_tokens():
                     _LOGGER.info("Startup token refresh successful")
                 else:
-                    _LOGGER.warning("Startup token refresh failed - will retry on next use")
+                    _LOGGER.warning(
+                        "Startup token refresh failed - will retry on next use"
+                    )
             else:
                 _LOGGER.info("Tokens are valid on startup")
 
@@ -101,7 +103,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 if await oauth_manager.refresh_tokens():
                     _LOGGER.info("Periodic token refresh successful")
                 else:
-                    _LOGGER.warning("Periodic token refresh failed - will retry on next use")
+                    _LOGGER.warning(
+                        "Periodic token refresh failed - will retry on next use"
+                    )
             else:
                 _LOGGER.debug("Tokens are still valid, no refresh needed")
 
