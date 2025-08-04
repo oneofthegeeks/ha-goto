@@ -5,6 +5,30 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2025-01-XX
+
+### Fixed
+- **Authentication Persistence**: Significantly improved token refresh and authentication persistence
+- **Proactive Token Refresh**: Added periodic token refresh every 30 minutes to keep tokens fresh
+- **Startup Token Validation**: Added startup validation to ensure tokens are valid when integration loads
+- **Retry Logic**: Enhanced retry logic with exponential backoff for both token refresh and SMS sending
+- **Token Validation**: More aggressive token validation (refreshes when within 15 minutes of expiry)
+- **Error Handling**: Improved error handling and logging for authentication failures
+
+### Technical Improvements
+- **Periodic Refresh**: Added `async_track_time_interval` to refresh tokens every 30 minutes
+- **Startup Validation**: Added startup token validation with 5-second delay for proper initialization
+- **Enhanced Retry Logic**: Implemented 3-retry logic with exponential backoff for token refresh
+- **Better Logging**: Improved debug logging for token validation and refresh operations
+- **Rate Limiting**: Added handling for 429 rate limit responses with exponential backoff
+
+### Authentication Robustness
+- **Proactive Refresh**: Tokens are now refreshed 15 minutes before expiry instead of 5 minutes
+- **Multiple Retry Attempts**: Token refresh now retries up to 3 times with exponential backoff
+- **Startup Validation**: Integration validates and refreshes tokens on startup
+- **Periodic Maintenance**: Automatic token refresh every 30 minutes ensures tokens stay fresh
+- **Better Error Recovery**: Improved handling of network errors and API failures
+
 ## [1.3.1] - 2025-01-XX
 
 ### Fixed

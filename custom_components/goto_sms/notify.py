@@ -138,84 +138,113 @@ class GoToSMSNotificationService(BaseNotificationService):
 
     def _send_sms(self, message: str, target: str, sender_id: str) -> None:
         """Send SMS message via GoTo Connect API."""
-        try:
-            _LOGGER.debug("Attempting to get authentication headers")
-            headers = self.oauth_manager.get_headers()
-            if not headers:
-                _LOGGER.error("Failed to get valid authentication headers")
-                _LOGGER.error(
-                    "This may indicate expired tokens or configuration issues"
+        max_retries = 2
+        retry_count = 0
+        
+        while retry_count <= max_retries:
+            try:
+                _LOGGER.debug("Attempting to get authentication headers (attempt %d/%d)", retry_count + 1, max_retries + 1)
+                headers = self.oauth_manager.get_headers()
+                if not headers:
+                    _LOGGER.error("Failed to get valid authentication headers")
+                    _LOGGER.error(
+                        "This may indicate expired tokens or configuration issues"
+                    )
+                    _LOGGER.error("Re-authentication has been triggered automatically")
+                    _LOGGER.error(
+                        "Please check your Home Assistant UI for re-authentication prompts"
+                    )
+                    return
+
+                # Prepare the SMS payload according to GoTo Connect API specification
+                payload = {
+                    "ownerPhoneNumber": sender_id,  # The GoTo phone number to send from
+                    "contactPhoneNumbers": [target],  # List of phone numbers to send to
+                    "body": message,  # The message content
+                }
+
+                url = f"{GOTO_API_BASE_URL}{SMS_ENDPOINT}"
+
+                _LOGGER.info(
+                    "Sending SMS to %s: %s",
+                    target,
+                    message[:50] + "..." if len(message) > 50 else message,
                 )
-                _LOGGER.error("Re-authentication has been triggered automatically")
-                _LOGGER.error(
-                    "Please check your Home Assistant UI for re-authentication prompts"
+
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=30,
                 )
-                return
 
-            # Prepare the SMS payload according to GoTo Connect API specification
-            payload = {
-                "ownerPhoneNumber": sender_id,  # The GoTo phone number to send from
-                "contactPhoneNumbers": [target],  # List of phone numbers to send to
-                "body": message,  # The message content
-            }
+                if response.status_code in [200, 201]:
+                    _LOGGER.info("SMS sent successfully to %s", target)
 
-            url = f"{GOTO_API_BASE_URL}{SMS_ENDPOINT}"
+                    # Track the message using both methods
+                    self._track_message_sent()
+                    return  # Success, exit the retry loop
 
-            _LOGGER.info(
-                "Sending SMS to %s: %s",
-                target,
-                message[:50] + "..." if len(message) > 50 else message,
-            )
-
-            response = requests.post(
-                url,
-                headers=headers,
-                json=payload,
-                timeout=30,
-            )
-
-            if response.status_code in [200, 201]:
-                _LOGGER.info("SMS sent successfully to %s", target)
-
-                # Track the message using both methods
-                self._track_message_sent()
-
-            elif response.status_code == 401:
-                _LOGGER.error("Authentication failed. Token may be expired.")
-                # Try to refresh token and retry once
-                if self.oauth_manager.refresh_tokens():
-                    headers = self.oauth_manager.get_headers()
-                    if headers:
-                        response = requests.post(
-                            url,
-                            headers=headers,
-                            json=payload,
-                            timeout=30,
+                elif response.status_code == 401:
+                    _LOGGER.warning("Authentication failed (attempt %d/%d). Token may be expired.", retry_count + 1, max_retries + 1)
+                    
+                    if retry_count < max_retries:
+                        _LOGGER.info("Attempting to refresh tokens and retry...")
+                        if self.oauth_manager.refresh_tokens():
+                            _LOGGER.info("Token refresh successful, retrying SMS send...")
+                            retry_count += 1
+                            continue  # Retry with fresh tokens
+                        else:
+                            _LOGGER.error("Token refresh failed")
+                            break  # Don't retry if refresh failed
+                    else:
+                        _LOGGER.error("All authentication attempts failed")
+                        _LOGGER.error("Re-authentication has been triggered automatically")
+                        _LOGGER.error(
+                            "Please check your Home Assistant UI for re-authentication prompts"
                         )
-                        if response.status_code in [200, 201]:
-                            _LOGGER.info("SMS sent successfully after token refresh")
+                        return
+                        
+                elif response.status_code == 429:  # Rate limited
+                    _LOGGER.warning("Rate limited by GoTo API (attempt %d/%d)", retry_count + 1, max_retries + 1)
+                    if retry_count < max_retries:
+                        import time
+                        wait_time = 2 ** (retry_count + 1)  # Exponential backoff: 2s, 4s
+                        _LOGGER.info("Waiting %d seconds before retry...", wait_time)
+                        time.sleep(wait_time)
+                        retry_count += 1
+                        continue
+                    else:
+                        _LOGGER.error("Rate limit exceeded after all retries")
+                        return
+                        
+                else:
+                    _LOGGER.error(
+                        "Failed to send SMS. Status: %d, Response: %s",
+                        response.status_code,
+                        response.text,
+                    )
+                    # For other errors, don't retry unless it's a network issue
+                    break
 
-                            # Track the message using both methods
-                            self._track_message_sent()
+            except requests.exceptions.RequestException as e:
+                _LOGGER.error("Network error while sending SMS (attempt %d/%d): %s", retry_count + 1, max_retries + 1, e)
+                if retry_count < max_retries:
+                    import time
+                    wait_time = 2 ** (retry_count + 1)  # Exponential backoff
+                    _LOGGER.info("Waiting %d seconds before retry...", wait_time)
+                    time.sleep(wait_time)
+                    retry_count += 1
+                    continue
+                else:
+                    _LOGGER.error("Network error persisted after all retries")
+                    return
+                    
+            except Exception as e:
+                _LOGGER.error("Unexpected error while sending SMS (attempt %d/%d): %s", retry_count + 1, max_retries + 1, e)
+                break  # Don't retry for unexpected errors
 
-                            return
-
-                _LOGGER.error("Failed to send SMS after token refresh")
-                _LOGGER.error("Re-authentication has been triggered automatically")
-                _LOGGER.error(
-                    "Please check your Home Assistant UI for re-authentication prompts"
-                )
-            else:
-                _LOGGER.error(
-                    "Failed to send SMS. Status: %d, Response: %s",
-                    response.status_code,
-                    response.text,
-                )
-
-        except requests.exceptions.RequestException as e:
-            _LOGGER.error("Network error while sending SMS: %s", e)
-        except Exception as e:
-            _LOGGER.error("Unexpected error while sending SMS: %s", e)
+        _LOGGER.error("Failed to send SMS after all retry attempts")
 
     def _track_message_sent(self) -> None:
         """Track that a message was sent using both tracking methods."""
