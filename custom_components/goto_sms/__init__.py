@@ -28,7 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Create OAuth manager for this config entry
     oauth_manager = GoToOAuth2Manager(hass, entry)
-    
+
     # Store the OAuth manager in hass.data for access by other components
     hass.data[DOMAIN][f"{entry.entry_id}_oauth"] = oauth_manager
 
@@ -37,12 +37,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Validate and refresh tokens on startup."""
         try:
             _LOGGER.info("Running startup token validation")
-            
+
             # Load tokens
             if not oauth_manager.load_tokens():
                 _LOGGER.warning("No tokens found during startup validation")
                 return
-            
+
             # Check if tokens need refresh
             if not oauth_manager._validate_tokens():
                 _LOGGER.info("Tokens need refresh on startup, refreshing...")
@@ -52,7 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     _LOGGER.warning("Startup token refresh failed")
             else:
                 _LOGGER.info("Tokens are valid on startup")
-                
+
         except Exception as e:
             _LOGGER.error("Error during startup token validation: %s", e)
 
@@ -87,13 +87,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Periodically refresh tokens to keep them fresh."""
         try:
             _LOGGER.debug("Running periodic token refresh check")
-            
+
             # Load tokens if not already loaded
             if not oauth_manager._tokens:
                 if not oauth_manager.load_tokens():
                     _LOGGER.warning("No tokens available for periodic refresh")
                     return
-            
+
             # Check if tokens need refresh (using the same validation logic)
             if not oauth_manager._validate_tokens():
                 _LOGGER.info("Proactively refreshing tokens before expiry")
@@ -103,15 +103,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     _LOGGER.warning("Periodic token refresh failed")
             else:
                 _LOGGER.debug("Tokens are still valid, no refresh needed")
-                
+
         except Exception as e:
             _LOGGER.error("Error during periodic token refresh: %s", e)
 
     # Run token refresh every 30 minutes
     entry.async_on_unload(
-        async_track_time_interval(
-            hass, refresh_tokens_periodic, timedelta(minutes=30)
-        )
+        async_track_time_interval(hass, refresh_tokens_periodic, timedelta(minutes=30))
     )
 
     return True

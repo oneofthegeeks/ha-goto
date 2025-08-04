@@ -145,7 +145,9 @@ class GoToOAuth2Manager:
         """Validate that tokens exist and are not expired."""
         required_keys = [CONF_ACCESS_TOKEN, CONF_REFRESH_TOKEN, CONF_TOKEN_EXPIRES_AT]
 
-        _LOGGER.debug("Validating tokens. Available keys: %s", list(self._tokens.keys()))
+        _LOGGER.debug(
+            "Validating tokens. Available keys: %s", list(self._tokens.keys())
+        )
 
         if not all(key in self._tokens for key in required_keys):
             missing_keys = [key for key in required_keys if key not in self._tokens]
@@ -173,7 +175,9 @@ class GoToOAuth2Manager:
             # Token is valid if it expires more than 15 minutes from now
             # This gives us plenty of time to refresh proactively
             if time_until_expiry <= timedelta(minutes=15):
-                _LOGGER.info("Token expires within 15 minutes - will refresh proactively")
+                _LOGGER.info(
+                    "Token expires within 15 minutes - will refresh proactively"
+                )
                 return False
 
             _LOGGER.debug("Token is valid with %s remaining", time_until_expiry)
@@ -316,7 +320,7 @@ class GoToOAuth2Manager:
         """Refresh the access token using refresh token."""
         max_retries = 3
         retry_count = 0
-        
+
         while retry_count < max_retries:
             try:
                 if CONF_REFRESH_TOKEN not in self._tokens:
@@ -335,7 +339,11 @@ class GoToOAuth2Manager:
                     "refresh_token": self._tokens[CONF_REFRESH_TOKEN],
                 }
 
-                _LOGGER.info("Attempting token refresh (attempt %d/%d)", retry_count + 1, max_retries)
+                _LOGGER.info(
+                    "Attempting token refresh (attempt %d/%d)",
+                    retry_count + 1,
+                    max_retries,
+                )
 
                 # Make the token refresh request
                 response = requests.post(
@@ -366,29 +374,33 @@ class GoToOAuth2Manager:
                     return self.save_tokens()
                 else:
                     _LOGGER.warning(
-                        "Token refresh attempt %d failed: %d - %s", 
-                        retry_count + 1, 
-                        response.status_code, 
-                        response.text
+                        "Token refresh attempt %d failed: %d - %s",
+                        retry_count + 1,
+                        response.status_code,
+                        response.text,
                     )
-                    
+
                     # If it's a 401 or 400, the refresh token might be invalid
                     if response.status_code in [401, 400]:
                         _LOGGER.error("Refresh token appears to be invalid")
                         break
-                    
+
                     # For other errors, retry after a short delay
                     retry_count += 1
                     if retry_count < max_retries:
                         import time
-                        time.sleep(2 ** retry_count)  # Exponential backoff: 2s, 4s, 8s
+
+                        time.sleep(2**retry_count)  # Exponential backoff: 2s, 4s, 8s
 
             except Exception as e:
-                _LOGGER.error("Failed to refresh tokens (attempt %d): %s", retry_count + 1, e)
+                _LOGGER.error(
+                    "Failed to refresh tokens (attempt %d): %s", retry_count + 1, e
+                )
                 retry_count += 1
                 if retry_count < max_retries:
                     import time
-                    time.sleep(2 ** retry_count)  # Exponential backoff
+
+                    time.sleep(2**retry_count)  # Exponential backoff
 
         # If we get here, all retries failed
         _LOGGER.error("All token refresh attempts failed, triggering re-authentication")
