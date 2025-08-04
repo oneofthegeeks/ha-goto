@@ -5,6 +5,26 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2025-01-04
+
+### Fixed
+- **Thread Safety Issues**: Removed automatic SMS tracking to eliminate thread safety conflicts
+- **Async/Thread Conflicts**: Eliminated RuntimeError caused by calling async operations from sync context
+- **Simplified Architecture**: Removed complex tracking logic that was causing Home Assistant crashes
+- **Manual Tracking**: Users can now manually track SMS counts in their automations for better control
+
+### Technical Improvements
+- **Removed sensor.py**: Eliminated automatic sensor tracking that was causing thread safety issues
+- **Simplified notify.py**: Removed all tracking methods and async/thread boundary complications
+- **Better Error Handling**: No more thread safety violations or async_add_job deprecation warnings
+- **Cleaner Code**: Reduced complexity and potential failure points
+
+### User Experience
+- **Manual Control**: Users have full control over when and how to track SMS messages
+- **No More Crashes**: Eliminated the thread safety issues that were causing Home Assistant errors
+- **Simple Setup**: Easy to set up manual tracking with input_number entities
+- **Reliable Operation**: Integration now focuses solely on SMS sending without tracking complications
+
 ## [1.3.2] - 2025-01-04
 
 ### Fixed

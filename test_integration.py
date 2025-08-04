@@ -66,7 +66,6 @@ def test_syntax():
         'custom_components/goto_sms/oauth.py',
         'custom_components/goto_sms/notify.py',
         'custom_components/goto_sms/config_flow.py',
-        'custom_components/goto_sms/sensor.py',
     ]
     
     all_valid = True
