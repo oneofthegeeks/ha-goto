@@ -283,15 +283,16 @@ class GoToSMSNotificationService(BaseNotificationService):
             try:
                 current_count = self._get_input_number_count()
                 if current_count is not None:
-                    # Use async_add_job to properly schedule the service call
-                    self.hass.async_add_job(
-                        self.hass.services.async_call,
-                        "input_number",
-                        "set_value",
-                        {
-                            "entity_id": "input_number.sms_messages_sent",
-                            "value": current_count + 1,
-                        },
+                    # Use async_create_task to properly schedule the service call
+                    self.hass.async_create_task(
+                        self.hass.services.async_call(
+                            "input_number",
+                            "set_value",
+                            {
+                                "entity_id": "input_number.sms_messages_sent",
+                                "value": current_count + 1,
+                            },
+                        )
                     )
                     _LOGGER.info("Scheduled input_number SMS counter update")
             except Exception as e:
@@ -301,30 +302,31 @@ class GoToSMSNotificationService(BaseNotificationService):
             try:
                 sensor_entity_id = self._find_sms_sensor()
                 if sensor_entity_id:
-                    # Use a service call to update the sensor state
-                    self.hass.async_add_job(
-                        self.hass.states.async_set,
-                        sensor_entity_id,
-                        self._get_sensor_current_value(sensor_entity_id) + 1,
-                        {
-                            "daily_count": self._get_sensor_attr(
-                                sensor_entity_id, "daily_count", 0
-                            )
-                            + 1,
-                            "weekly_count": self._get_sensor_attr(
-                                sensor_entity_id, "weekly_count", 0
-                            )
-                            + 1,
-                            "monthly_count": self._get_sensor_attr(
-                                sensor_entity_id, "monthly_count", 0
-                            )
-                            + 1,
-                            "total_count": self._get_sensor_attr(
-                                sensor_entity_id, "total_count", 0
-                            )
-                            + 1,
-                            "last_reset": datetime.now().date().isoformat(),
-                        },
+                    # Use async_create_task to update the sensor state
+                    self.hass.async_create_task(
+                        self.hass.states.async_set(
+                            sensor_entity_id,
+                            self._get_sensor_current_value(sensor_entity_id) + 1,
+                            {
+                                "daily_count": self._get_sensor_attr(
+                                    sensor_entity_id, "daily_count", 0
+                                )
+                                + 1,
+                                "weekly_count": self._get_sensor_attr(
+                                    sensor_entity_id, "weekly_count", 0
+                                )
+                                + 1,
+                                "monthly_count": self._get_sensor_attr(
+                                    sensor_entity_id, "monthly_count", 0
+                                )
+                                + 1,
+                                "total_count": self._get_sensor_attr(
+                                    sensor_entity_id, "total_count", 0
+                                )
+                                + 1,
+                                "last_reset": datetime.now().date().isoformat(),
+                            },
+                        )
                     )
                     _LOGGER.info("Scheduled SMS sensor counter update")
             except Exception as e:
