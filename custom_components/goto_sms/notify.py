@@ -140,10 +140,14 @@ class GoToSMSNotificationService(BaseNotificationService):
         """Send SMS message via GoTo Connect API."""
         max_retries = 2
         retry_count = 0
-        
+
         while retry_count <= max_retries:
             try:
-                _LOGGER.debug("Attempting to get authentication headers (attempt %d/%d)", retry_count + 1, max_retries + 1)
+                _LOGGER.debug(
+                    "Attempting to get authentication headers (attempt %d/%d)",
+                    retry_count + 1,
+                    max_retries + 1,
+                )
                 headers = self.oauth_manager.get_headers()
                 if not headers:
                     _LOGGER.error("Failed to get valid authentication headers")
@@ -186,12 +190,18 @@ class GoToSMSNotificationService(BaseNotificationService):
                     return  # Success, exit the retry loop
 
                 elif response.status_code == 401:
-                    _LOGGER.warning("Authentication failed (attempt %d/%d). Token may be expired.", retry_count + 1, max_retries + 1)
-                    
+                    _LOGGER.warning(
+                        "Authentication failed (attempt %d/%d). Token may be expired.",
+                        retry_count + 1,
+                        max_retries + 1,
+                    )
+
                     if retry_count < max_retries:
                         _LOGGER.info("Attempting to refresh tokens and retry...")
                         if self.oauth_manager.refresh_tokens():
-                            _LOGGER.info("Token refresh successful, retrying SMS send...")
+                            _LOGGER.info(
+                                "Token refresh successful, retrying SMS send..."
+                            )
                             retry_count += 1
                             continue  # Retry with fresh tokens
                         else:
@@ -199,17 +209,26 @@ class GoToSMSNotificationService(BaseNotificationService):
                             break  # Don't retry if refresh failed
                     else:
                         _LOGGER.error("All authentication attempts failed")
-                        _LOGGER.error("Re-authentication has been triggered automatically")
+                        _LOGGER.error(
+                            "Re-authentication has been triggered automatically"
+                        )
                         _LOGGER.error(
                             "Please check your Home Assistant UI for re-authentication prompts"
                         )
                         return
-                        
+
                 elif response.status_code == 429:  # Rate limited
-                    _LOGGER.warning("Rate limited by GoTo API (attempt %d/%d)", retry_count + 1, max_retries + 1)
+                    _LOGGER.warning(
+                        "Rate limited by GoTo API (attempt %d/%d)",
+                        retry_count + 1,
+                        max_retries + 1,
+                    )
                     if retry_count < max_retries:
                         import time
-                        wait_time = 2 ** (retry_count + 1)  # Exponential backoff: 2s, 4s
+
+                        wait_time = 2 ** (
+                            retry_count + 1
+                        )  # Exponential backoff: 2s, 4s
                         _LOGGER.info("Waiting %d seconds before retry...", wait_time)
                         time.sleep(wait_time)
                         retry_count += 1
@@ -217,7 +236,7 @@ class GoToSMSNotificationService(BaseNotificationService):
                     else:
                         _LOGGER.error("Rate limit exceeded after all retries")
                         return
-                        
+
                 else:
                     _LOGGER.error(
                         "Failed to send SMS. Status: %d, Response: %s",
@@ -228,9 +247,15 @@ class GoToSMSNotificationService(BaseNotificationService):
                     break
 
             except requests.exceptions.RequestException as e:
-                _LOGGER.error("Network error while sending SMS (attempt %d/%d): %s", retry_count + 1, max_retries + 1, e)
+                _LOGGER.error(
+                    "Network error while sending SMS (attempt %d/%d): %s",
+                    retry_count + 1,
+                    max_retries + 1,
+                    e,
+                )
                 if retry_count < max_retries:
                     import time
+
                     wait_time = 2 ** (retry_count + 1)  # Exponential backoff
                     _LOGGER.info("Waiting %d seconds before retry...", wait_time)
                     time.sleep(wait_time)
@@ -239,9 +264,14 @@ class GoToSMSNotificationService(BaseNotificationService):
                 else:
                     _LOGGER.error("Network error persisted after all retries")
                     return
-                    
+
             except Exception as e:
-                _LOGGER.error("Unexpected error while sending SMS (attempt %d/%d): %s", retry_count + 1, max_retries + 1, e)
+                _LOGGER.error(
+                    "Unexpected error while sending SMS (attempt %d/%d): %s",
+                    retry_count + 1,
+                    max_retries + 1,
+                    e,
+                )
                 break  # Don't retry for unexpected errors
 
         _LOGGER.error("Failed to send SMS after all retry attempts")
