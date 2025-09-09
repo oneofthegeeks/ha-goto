@@ -43,7 +43,7 @@ def check_documentation():
         'README.md',
         'CHANGELOG.md',
         'INSTALL.md',
-        'SMS_TRACKING.md',
+        'QUICKSTART.md',
         'CONTRIBUTING.md',
     ]
     

@@ -165,7 +165,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Persistent Storage**: Message counts persist across Home Assistant restarts
 
 ### Features
-- **Simple Input Number Tracking**: Easy setup with `input_number.sms_messages_sent`
+- **Simple Input Number Tracking**: Easy setup with manual tracking
 - **Advanced Sensor Tracking**: Automatic sensor with detailed attributes
 - **Automatic Incrementing**: Counters increment automatically on successful SMS sends
 - **Failed Message Handling**: Counters only increment for successful sends
@@ -175,7 +175,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `sensor.py` for advanced SMS tracking capabilities
 - Enhanced `notify.py` with dual tracking support
 - Updated `__init__.py` to include sensor platform
-- Added comprehensive documentation in `SMS_TRACKING.md`
+- Added comprehensive documentation for tracking features
 - Improved error handling for tracking operations
 
 ### Documentation
