@@ -1,0 +1,170 @@
+# Device Configuration for Wake-Up Automation
+# This file contains the device entities and their configurations
+
+# =============================================================================
+# DEVICE ENTITIES CONFIGURATION
+# =============================================================================
+
+# Replace these entity IDs with your actual Home Assistant device entities
+# You can find your entity IDs in Home Assistant under:
+# Configuration > Devices & Services > Entities
+
+# =============================================================================
+# LIGHTING DEVICES
+# =============================================================================
+
+# Bedroom Lights - Replace with your actual light entity IDs
+lights:
+  sons_bedroom_main: "light.sons_bedroom_main_light"      # Main bedroom light
+  sons_bedroom_lamp: "light.sons_bedroom_lamp"            # Bedside lamp
+  sons_bedroom_strip: "light.sons_bedroom_led_strip"      # LED strip lights
+  sons_bedroom_overhead: "light.sons_bedroom_overhead"    # Overhead light
+  sons_bedroom_closet: "light.sons_bedroom_closet"        # Closet light
+
+# Light Groups (if you have them configured)
+light_groups:
+  sons_bedroom_all: "light.sons_bedroom_all_lights"       # All bedroom lights group
+
+# =============================================================================
+# MEDIA DEVICES
+# =============================================================================
+
+# TV/Display Devices
+media_players:
+  sons_tv: "media_player.sons_bedroom_tv"                 # Bedroom TV
+  sons_chromecast: "media_player.sons_bedroom_chromecast" # Chromecast device
+  sons_apple_tv: "media_player.sons_bedroom_apple_tv"     # Apple TV (if applicable)
+
+# Audio Devices
+audio_devices:
+  sons_google_speaker: "media_player.sons_bedroom_speaker" # Google Home/Nest speaker
+  sons_echo: "media_player.sons_bedroom_echo"              # Amazon Echo (if applicable)
+  sons_bluetooth_speaker: "media_player.sons_bedroom_bluetooth" # Bluetooth speaker
+
+# =============================================================================
+# SMART HOME DEVICES
+# =============================================================================
+
+# Other smart devices that could be part of the wake-up routine
+smart_devices:
+  sons_air_conditioner: "climate.sons_bedroom_ac"         # Air conditioning
+  sons_fan: "fan.sons_bedroom_fan"                        # Ceiling fan
+  sons_blinds: "cover.sons_bedroom_blinds"                # Motorized blinds
+  sons_curtains: "cover.sons_bedroom_curtains"            # Motorized curtains
+
+# =============================================================================
+# SENSORS AND MONITORING
+# =============================================================================
+
+# Sensors for monitoring and conditions
+sensors:
+  sons_room_temperature: "sensor.sons_bedroom_temperature" # Room temperature
+  sons_room_humidity: "sensor.sons_bedroom_humidity"       # Room humidity
+  sons_room_light_level: "sensor.sons_bedroom_light_level" # Ambient light level
+  sons_motion_sensor: "binary_sensor.sons_bedroom_motion"  # Motion sensor
+  sons_door_sensor: "binary_sensor.sons_bedroom_door"      # Door sensor
+
+# =============================================================================
+# SWITCHES AND CONTROLS
+# =============================================================================
+
+# Switches for additional control
+switches:
+  sons_night_light: "switch.sons_bedroom_night_light"     # Night light switch
+  sons_white_noise: "switch.sons_bedroom_white_noise"     # White noise machine
+  sons_air_purifier: "switch.sons_bedroom_air_purifier"   # Air purifier
+
+# =============================================================================
+# DEVICE DISCOVERY HELPERS
+# =============================================================================
+
+# Template sensors to help discover your devices
+template:
+  - sensor:
+      - name: "Available Lights in Son's Bedroom"
+        state: >
+          {% set lights = states.light | selectattr('entity_id', 'match', '.*sons.*bedroom.*') | list %}
+          {{ lights | length }} lights found
+        attributes:
+          devices: >
+            {% set lights = states.light | selectattr('entity_id', 'match', '.*sons.*bedroom.*') | list %}
+            {{ lights | map(attribute='entity_id') | list }}
+
+      - name: "Available Media Players in Son's Bedroom"
+        state: >
+          {% set players = states.media_player | selectattr('entity_id', 'match', '.*sons.*bedroom.*') | list %}
+          {{ players | length }} media players found
+        attributes:
+          devices: >
+            {% set players = states.media_player | selectattr('entity_id', 'match', '.*sons.*bedroom.*') | list %}
+            {{ players | map(attribute='entity_id') | list }}
+
+# =============================================================================
+# DEVICE TESTING SCRIPT
+# =============================================================================
+
+script:
+  discover_sons_devices:
+    alias: "Discover Son's Bedroom Devices"
+    description: "Lists all available devices in son's bedroom for configuration"
+    sequence:
+      - service: logbook.log
+        data:
+          name: "Device Discovery"
+          message: "Discovering devices in son's bedroom..."
+      
+      - service: system_log.write
+        data:
+          message: "=== SON'S BEDROOM DEVICES ==="
+          level: info
+      
+      - service: system_log.write
+        data:
+          message: "Lights: {{ states.light | selectattr('entity_id', 'match', '.*sons.*bedroom.*') | map(attribute='entity_id') | list }}"
+          level: info
+      
+      - service: system_log.write
+        data:
+          message: "Media Players: {{ states.media_player | selectattr('entity_id', 'match', '.*sons.*bedroom.*') | map(attribute='entity_id') | list }}"
+          level: info
+      
+      - service: system_log.write
+        data:
+          message: "Switches: {{ states.switch | selectattr('entity_id', 'match', '.*sons.*bedroom.*') | map(attribute='entity_id') | list }}"
+          level: info
+      
+      - service: system_log.write
+        data:
+          message: "Sensors: {{ states.sensor | selectattr('entity_id', 'match', '.*sons.*bedroom.*') | map(attribute='entity_id') | list }}"
+          level: info
+      
+      - service: system_log.write
+        data:
+          message: "=== END DEVICE DISCOVERY ==="
+          level: info
+
+# =============================================================================
+# DEVICE CONFIGURATION VALIDATION
+# =============================================================================
+
+# Input button to validate device configuration
+input_button:
+  validate_device_config:
+    name: "Validate Device Configuration"
+    icon: mdi:check-circle
+
+# Automation to validate device configuration
+automation:
+  - alias: "Validate Device Configuration"
+    description: "Checks if all required devices are available"
+    trigger:
+      - platform: state
+        entity_id: input_button.validate_device_config
+    action:
+      - service: script.discover_sons_devices
+      - service: notify.persistent_notification
+        data:
+          title: "Device Configuration Validation"
+          message: >
+            Check the Home Assistant logs for device discovery results.
+            Update the entity IDs in your configuration files based on the discovered devices.

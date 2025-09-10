@@ -1,0 +1,95 @@
+# Google Calendar Integration Configuration
+# This file contains the configuration for integrating Google Calendar with Home Assistant
+
+# =============================================================================
+# GOOGLE CALENDAR INTEGRATION
+# =============================================================================
+
+# Add this to your configuration.yaml file
+# Or create a separate file and include it
+
+# Google Calendar integration
+google:
+  client_id: !secret google_client_id
+  client_secret: !secret google_client_secret
+
+# Calendar platform
+calendar:
+  - platform: google
+    cal_id: "your-sons-calendar@gmail.com"  # Replace with actual calendar ID
+    entities:
+      - device_id: sons_wake_up_schedule
+        name: "Son's Wake Up Schedule"
+        track: true
+        ignore_availability: true
+
+# =============================================================================
+# ALTERNATIVE: CALDAV INTEGRATION (if you prefer CalDAV)
+# =============================================================================
+
+# Uncomment this section if you want to use CalDAV instead of Google Calendar
+# caldav:
+#   - url: "https://caldav.google.com/dav/your-email@gmail.com/events/"
+#     username: "your-email@gmail.com"
+#     password: !secret caldav_password
+#     custom_calendars:
+#       - name: "Son's Wake Up Schedule"
+#         calendar: "your-sons-calendar@gmail.com"
+#         search: "wake up"
+
+# =============================================================================
+# CALENDAR EVENT TEMPLATES
+# =============================================================================
+
+# Example calendar events you can create:
+# 
+# Event Title: "Wake Up - School Day"
+# Time: 7:00 AM - 7:30 AM
+# Recurrence: Daily (Monday-Friday)
+# 
+# Event Title: "Wake Up - Weekend"
+# Time: 8:00 AM - 8:30 AM
+# Recurrence: Weekly (Saturday-Sunday)
+# 
+# Event Title: "Wake Up - Special Day"
+# Time: 6:30 AM - 7:00 AM
+# Recurrence: None (one-time event)
+
+# =============================================================================
+# CALENDAR EVENT KEYWORDS
+# =============================================================================
+
+# The automation will trigger on any calendar event that starts
+# You can modify the automation to only trigger on specific keywords:
+# 
+# In the automation trigger, you can add conditions like:
+# condition:
+#   - condition: template
+#     value_template: >
+#       {{ 'wake up' in trigger.calendar_event.summary | lower or
+#          'alarm' in trigger.calendar_event.summary | lower or
+#          'rise' in trigger.calendar_event.summary | lower }}
+
+# =============================================================================
+# SECRETS FILE TEMPLATE
+# =============================================================================
+
+# Add these to your secrets.yaml file:
+# google_client_id: "your-google-client-id.apps.googleusercontent.com"
+# google_client_secret: "your-google-client-secret"
+# caldav_password: "your-app-password"  # If using CalDAV
+
+# =============================================================================
+# GOOGLE CALENDAR API SETUP INSTRUCTIONS
+# =============================================================================
+
+# 1. Go to Google Cloud Console (https://console.cloud.google.com/)
+# 2. Create a new project or select existing one
+# 3. Enable Google Calendar API
+# 4. Create credentials (OAuth 2.0 Client ID)
+# 5. Add authorized redirect URIs:
+#    - http://your-home-assistant-ip:8123/auth/authorize
+#    - https://your-home-assistant-domain:8123/auth/authorize
+# 6. Download the credentials JSON file
+# 7. Extract client_id and client_secret
+# 8. Add them to your secrets.yaml file
