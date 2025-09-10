@@ -1,464 +1,233 @@
-# GoTo SMS Integration for Home Assistant
+# Home Assistant Wake-Up Automation System
 
-[![Test Integration](https://github.com/oneofthegeeks/ha-goto/workflows/Test%20Integration/badge.svg)](https://github.com/oneofthegeeks/ha-goto/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/setup/prerequisites)
+A comprehensive automation system that creates a sunrise-like wake-up experience for your son based on Google Calendar events. This system gradually increases bedroom lights, turns on the TV, and plays wake-up audio through Google speakers.
 
-A custom Home Assistant integration that allows you to send SMS messages using the GoTo Connect API.
+## 🌅 Features
 
-## Features
+- **Google Calendar Integration**: Automatically triggers based on calendar events
+- **Sunrise Light Simulation**: Gradual light increase over customizable duration
+- **TV Wake-Up**: Automatically turns on TV and plays gentle morning content
+- **Audio Wake-Up**: Plays nature sounds, music, or TTS messages through Google speakers
+- **Customizable Settings**: Adjustable volume, duration, and sound options
+- **Manual Testing**: Built-in test buttons for troubleshooting
+- **Scene Management**: Pre-configured sleep and wake-up scenes
 
-- **OAuth2 Authentication**: Secure authentication using GoTo Connect's OAuth2 flow
-- **Automatic Token Refresh**: Automatically refreshes expired access tokens
-- **SMS Notifications**: Send SMS messages via the `goto_sms.send_sms` service
-- **Template Support**: Dynamic messages using Home Assistant templates
-- **Error Handling**: Comprehensive error logging and handling
-- **Async Compatible**: Built with async/await patterns for better performance
+## 📋 Prerequisites
 
+- Home Assistant (version 2023.1 or later)
+- Google Calendar with wake-up events
+- Smart lights in your son's bedroom
+- Smart TV or streaming device
+- Google Home/Nest speaker
+- Basic understanding of Home Assistant configuration
 
-## Installation
+## 🚀 Quick Setup
 
-### Method 1: HACS (Recommended)
+### 1. Install Required Integrations
 
-1. Make sure you have [HACS](https://hacs.xyz/) installed
-2. Add this repository as a custom repository in HACS
-3. Search for "GoTo SMS" in the HACS store
-4. Click "Download" and restart Home Assistant
+First, ensure you have these integrations installed in Home Assistant:
 
-### Method 2: Manual Installation
+- **Google Calendar** (built-in)
+- **Google Cast** (for speakers)
+- **Media Player** (for TV)
+- **Light** (for bedroom lights)
 
-1. Download this repository
-2. Copy the `custom_components/goto_sms` folder to your Home Assistant `config/custom_components/` directory
-3. Restart Home Assistant
-4. The integration will be available in the Integrations page
+### 2. Configure Google Calendar
 
-### Method 3: Automated Installation
+1. Go to Google Cloud Console (https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable Google Calendar API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URIs:
+   - `http://your-home-assistant-ip:8123/auth/authorize`
+   - `https://your-home-assistant-domain:8123/auth/authorize`
+6. Download credentials and extract `client_id` and `client_secret`
 
-Run the installation script from the repository root:
+### 3. Set Up Secrets
 
-```bash
-./install.sh
-```
-
-The script will auto-detect your Home Assistant installation and guide you through the process.
-
-## Updating
-
-### HACS Users (Recommended)
-
-If you installed via HACS, updates are automatic:
-
-1. **Automatic Updates**: HACS will notify you when updates are available
-2. **Manual Update**: Go to HACS → Integrations → GoTo SMS → Update
-3. **Restart**: After updating, restart Home Assistant
-
-### Manual Installation Updates
-
-#### Option 1: Using the Install Script (Recommended)
-
-```bash
-# Navigate to the repository directory
-cd /path/to/ha-goto
-
-# Pull latest changes
-git pull origin main
-
-# Run the install script (it handles backups automatically)
-./install.sh
-```
-
-#### Option 2: Manual Update
-
-1. **Backup your current installation**:
-   ```bash
-   cp -r /config/custom_components/goto_sms /config/custom_components/goto_sms.backup
-   ```
-
-2. **Download the latest version**:
-   - Download from GitHub releases, or
-   - Clone the repository: `git clone https://github.com/oneofthegeeks/ha-goto.git`
-
-3. **Replace the integration**:
-   ```bash
-   cp -r custom_components/goto_sms /config/custom_components/
-   ```
-
-4. **Restart Home Assistant**
-
-#### Option 3: Using the Dedicated Update Script (Recommended)
-
-The repository includes a dedicated update script:
-
-```bash
-# Run the update script
-./update.sh
-```
-
-The script will:
-- Automatically detect your Home Assistant installation
-- Create a backup of your current installation
-- Pull the latest changes from the repository
-- Install the updated integration
-- Provide clear next steps
-
-#### Option 4: Create Your Own Update Script
-
-Create a reusable update script for easier future updates:
-
-```bash
-#!/bin/bash
-# update_goto_sms.sh
-cd /path/to/ha-goto
-git pull origin main
-./install.sh
-```
-
-Make it executable: `chmod +x update_goto_sms.sh`
-
-### Post-Update Steps
-
-After updating:
-
-1. **Restart Home Assistant** to load the new version
-2. **Check the CHANGELOG** for any breaking changes
-3. **Test the integration** with a simple SMS
-4. **Review your automations** if there were major changes
-
-### Troubleshooting Updates
-
-#### Integration Not Working After Update
-
-1. **Check logs** for errors:
-   ```yaml
-   logger:
-     default: info
-     logs:
-       custom_components.goto_sms: debug
-   ```
-
-2. **Restore from backup** if needed:
-   ```bash
-   rm -rf /config/custom_components/goto_sms
-   cp -r /config/custom_components/goto_sms.backup /config/custom_components/goto_sms
-   ```
-
-3. **Re-authenticate** if OAuth tokens are invalid
-
-#### Version Compatibility
-
-- Check the `manifest.json` for minimum Home Assistant version requirements
-- Review the CHANGELOG for breaking changes
-- Test thoroughly after major version updates
-
-## Configuration
-
-### Prerequisites
-
-1. **GoTo Connect Account**: You need a GoTo Connect account with SMS capabilities
-2. **OAuth2 Application**: Create an OAuth2 application in your GoTo Connect developer portal
-3. **API Credentials**: Obtain your Client ID and Client Secret from GoTo Connect
-
-### Setup Steps
-
-1. **Create OAuth2 Application**:
-   - Log into your GoTo Connect developer portal
-   - Create a new OAuth2 application
-   - Set the redirect URI to `https://home-assistant.io/auth/callback`
-   - Note your Client ID and Client Secret
-
-2. **Configure Integration**:
-   - In Home Assistant, go to **Settings** → **Devices & Services**
-   - Click **Add Integration**
-   - Search for "GoTo SMS" and select it
-   - Enter your Client ID and Client Secret in the configuration form
-   - Complete the OAuth2 authorization flow by visiting the provided URL
-   - Paste the authorization response back into the form
-
-3. **Test the Integration**:
-   - Use the Developer Tools → Services
-   - Call the `goto_sms.send_sms` service with:
-     ```yaml
-     message: "Hello from Home Assistant!"
-     target: "+1234567890"
-     sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
-     ```
-
-## Usage
-
-### Service Call
-
-Send an SMS using the service:
+Copy `secrets_template.yaml` to `secrets.yaml` and fill in your credentials:
 
 ```yaml
-service: goto_sms.send_sms
-data:
-  message: "Your garage door is open!"
-  target: "+1234567890"
-  sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
+google_client_id: "your-google-client-id.apps.googleusercontent.com"
+google_client_secret: "your-google-client-secret"
 ```
 
-### Template Support
+### 4. Configure Devices
 
-The integration supports Home Assistant templates for dynamic messages:
-
-#### Basic Template Example
+Update `device_configuration.yaml` with your actual device entity IDs:
 
 ```yaml
-service: goto_sms.send_sms
-data:
-  message: "Temperature is {{ states('sensor.living_room_temperature') }}°F"
-  target: "+1234567890"
-  sender_id: "+1234567890"
+lights:
+  sons_bedroom_main: "light.sons_bedroom_main_light"
+  sons_bedroom_lamp: "light.sons_bedroom_lamp"
+  sons_bedroom_strip: "light.sons_bedroom_led_strip"
+
+media_players:
+  sons_tv: "media_player.sons_bedroom_tv"
+  sons_google_speaker: "media_player.sons_bedroom_speaker"
 ```
 
-#### Advanced Template with Data
+### 5. Add Configuration to Home Assistant
+
+Add this to your `configuration.yaml`:
 
 ```yaml
-service: goto_sms.send_sms
-data:
-  message: "Alert: {{ data.location }} sensor triggered at {{ now().strftime('%H:%M') }}"
-  target: "+1234567890"
-  sender_id: "+1234567890"
-  data:
-    location: "kitchen"
+# Include wake-up automation
+automation: !include wake_up_automation.yaml
+script: !include wake_up_automation.yaml
+scene: !include wake_up_automation.yaml
+input_select: !include wake_up_automation.yaml
+input_boolean: !include wake_up_automation.yaml
+input_button: !include wake_up_automation.yaml
+template: !include wake_up_automation.yaml
+
+# Include Google Calendar integration
+calendar: !include google_calendar_integration.yaml
 ```
 
-#### Template with Entity States
+### 6. Restart Home Assistant
 
-```yaml
-service: goto_sms.send_sms
-data:
-  message: |
-    Home Status Update:
-    - Temperature: {{ states('sensor.living_room_temperature') }}°F
-    - Humidity: {{ states('sensor.living_room_humidity') }}%
-    - Motion: {{ states('binary_sensor.motion_sensor') }}
-    - Door: {{ states('binary_sensor.front_door') }}
-  target: "+1234567890"
-  sender_id: "+1234567890"
-```
+After adding the configuration, restart Home Assistant to load the new automations.
 
-### Automation Examples
+## 📅 Setting Up Calendar Events
 
-#### Send SMS when motion detected with template:
+Create calendar events in your son's Google Calendar with these naming conventions:
 
-```yaml
-automation:
-  - alias: "Send SMS when motion detected"
-    trigger:
-      platform: state
-      entity_id: binary_sensor.motion_sensor
-      to: "on"
-    action:
-      - service: goto_sms.send_sms
-        data:
-          message: "Motion detected at {{ now().strftime('%H:%M on %Y-%m-%d') }}"
-          target: "+1234567890"
-          sender_id: "+1234567890"
-```
+- **"Wake Up - School Day"** (7:00 AM, Monday-Friday)
+- **"Wake Up - Weekend"** (8:00 AM, Saturday-Sunday)
+- **"Wake Up - Special Day"** (custom time, one-time events)
 
-#### Send SMS with sensor data:
+The automation will trigger automatically when these events start.
 
-```yaml
-automation:
-  - alias: "Temperature alert with template"
-    trigger:
-      platform: numeric_state
-      entity_id: sensor.living_room_temperature
-      above: 80
-    action:
-      - service: goto_sms.send_sms
-        data:
-          message: |
-            Temperature Alert!
-            Current: {{ states('sensor.living_room_temperature') }}°F
-            Humidity: {{ states('sensor.living_room_humidity') }}%
-            Time: {{ now().strftime('%H:%M') }}
-          target: "+1234567890"
-          sender_id: "+1234567890"
-```
+## 🎛️ Customization Options
 
-#### Send SMS with custom data:
+### Wake-Up Volume
+- Low (20%)
+- Medium (40%) - Default
+- High (60%)
+- Very High (80%)
 
-```yaml
-automation:
-  - alias: "Custom alert with template data"
-    trigger:
-      platform: state
-      entity_id: binary_sensor.front_door
-      to: "on"
-    action:
-      - service: goto_sms.send_sms
-        data:
-          message: "{{ data.event_type }} detected in {{ data.zone }}"
-          target: "+1234567890"
-          sender_id: "+1234567890"
-          data:
-            event_type: "Door opening"
-            zone: "front entrance"
-```
+### Sunrise Duration
+- Quick (5 minutes)
+- Normal (10 minutes) - Default
+- Slow (15 minutes)
+- Very Slow (20 minutes)
 
-### Script Example
+### Wake-Up Sound
+- Nature Sounds
+- Gentle Music
+- Alarm Clock (TTS)
+- Custom Playlist
 
-```yaml
-script:
-  send_test_sms:
-    alias: "Send Test SMS"
-    sequence:
-      - service: goto_sms.send_sms
-        data:
-          message: "This is a test message from Home Assistant"
-          target: "+1234567890"
-          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
-```
+### Toggle Options
+- Enable/disable entire automation
+- Enable/disable TV wake-up
+- Enable/disable light wake-up
+- Enable/disable speaker wake-up
 
-## Configuration Options
+## 🧪 Testing
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `client_id` | string | Yes | Your GoTo Connect OAuth2 Client ID |
-| `client_secret` | string | Yes | Your GoTo Connect OAuth2 Client Secret |
+Use the built-in test button to verify your setup:
 
-## Service Parameters
+1. Go to Home Assistant → Developer Tools → Services
+2. Call `input_button.press` with entity `input_button.test_wake_up`
+3. Or use the "Test Wake Up Sequence" button in the UI
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `message` | string | Yes | The SMS message to send (supports templates) |
-| `target` | string | Yes | Phone number with country code (e.g., "+1234567890") |
-| `sender_id` | string | Yes | GoTo phone number in E.164 format to send from (e.g., "+1234567890") |
-| `data` | object | No | Optional data for template rendering |
+## 📱 Usage
 
-## Template Features
+### Daily Operation
+The automation runs automatically based on your calendar events. No manual intervention required.
 
-### Supported Template Functions
+### Manual Control
+- Use the input selectors in Home Assistant to adjust settings
+- Toggle individual components on/off as needed
+- Use scenes for quick room state changes
 
-- **Entity States**: `{{ states('sensor.temperature') }}`
-- **Time Functions**: `{{ now().strftime('%H:%M') }}`
-- **Conditional Logic**: `{% if states('binary_sensor.motion') == 'on' %}Motion detected{% else %}No motion{% endif %}`
-- **Custom Data**: `{{ data.location }}` (when using the `data` parameter)
+### Monitoring
+- Check the logbook for automation activity
+- Monitor device states in Home Assistant
+- Use the "Next Wake Up Time" sensor to see upcoming events
 
-### Template Examples
+## 🔧 Troubleshooting
 
-#### Time-based Messages
-```yaml
-message: "Alert at {{ now().strftime('%H:%M on %Y-%m-%d') }}"
-```
+### Calendar Not Updating
+1. Check Google Calendar API credentials in `secrets.yaml`
+2. Verify calendar permissions in Google Cloud Console
+3. Check Home Assistant logs for authentication errors
+4. Restart Home Assistant after credential changes
 
-#### Sensor Data
-```yaml
-message: "Temperature: {{ states('sensor.living_room_temperature') }}°F"
-```
+### Devices Not Responding
+1. Verify entity IDs in `device_configuration.yaml`
+2. Check device connectivity in Home Assistant
+3. Use the device discovery script to find correct entity IDs
+4. Restart Home Assistant if needed
 
-#### Conditional Messages
-```yaml
-message: "{% if states('binary_sensor.motion') == 'on' %}Motion detected{% else %}No motion{% endif %}"
-```
+### Automation Not Triggering
+1. Check if automation is enabled in input_boolean
+2. Verify calendar events are properly configured
+3. Check Home Assistant logs for automation errors
+4. Test with manual trigger button
 
-#### Multi-line Status
-```yaml
-message: |
-  Home Status:
-  - Temperature: {{ states('sensor.temperature') }}°F
-  - Motion: {{ states('binary_sensor.motion') }}
-  - Time: {{ now().strftime('%H:%M') }}
-```
+### Media Not Playing
+1. Check media player entity IDs
+2. Verify media URLs/playlists are accessible
+3. Check speaker connectivity
+4. Test media playback manually in Home Assistant
 
-## Token Storage
-
-The integration stores OAuth2 tokens securely within the Home Assistant config entry system. The tokens are automatically refreshed when they expire and are managed by the integration.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Failed**:
-   - Check your Client ID and Client Secret
-   - Ensure your OAuth2 application is properly configured
-   - Verify the redirect URI matches exactly
-   - **Re-authentication**: If tokens expire, the integration will automatically trigger re-authentication
-
-2. **SMS Not Sending**:
-   - Check the target phone number format (include country code)
-   - Verify your GoTo Connect account has SMS capabilities
-   - Check the Home Assistant logs for detailed error messages
-
-3. **Template Rendering Issues**:
-   - Check template syntax for errors
-   - Verify entity names exist
-   - Enable debug logging to see template rendering details
-
-4. **Token Refresh Issues**:
-   - The integration will automatically trigger re-authentication when tokens expire
-   - Check your internet connection
-   - Verify the GoTo Connect API endpoints are accessible
-
-### Re-authentication
-
-The integration now supports automatic re-authentication when tokens expire:
-
-1. **Automatic Detection**: The integration detects when tokens are expired or invalid
-2. **UI Re-authentication**: A re-authentication prompt will appear in your Home Assistant UI
-3. **Seamless Process**: Follow the OAuth flow again without losing your configuration
-4. **Preserved Settings**: Your existing configuration is maintained during re-authentication
-
-**To manually trigger re-authentication:**
-1. Go to **Settings** → **Devices & Services**
-2. Find your GoTo SMS integration
-3. Click the three dots (⋮) and select **Reconfigure**
-4. Follow the OAuth flow again
-
-### Logs
-
-Enable debug logging by adding to your `configuration.yaml`:
-
-```yaml
-logger:
-  default: info
-  logs:
-    custom_components.goto_sms: debug
-```
-
-## Development
-
-### File Structure
+## 📁 File Structure
 
 ```
-custom_components/goto_sms/
-├── __init__.py          # Integration initialization
-├── manifest.json        # Integration metadata
-├── const.py            # Constants and configuration
-├── oauth.py            # OAuth2 token management
-├── notify.py           # SMS notification service
-├── config_flow.py      # Configuration flow
-├── services.yaml       # Service definitions
-└── translations/
-    └── en/
-        └── config_flow.json # UI translations
+/workspace/
+├── home_assistant_wake_up_automation.yaml    # Main automation configuration
+├── google_calendar_integration.yaml          # Calendar integration setup
+├── device_configuration.yaml                 # Device entity configuration
+├── wake_up_media_scripts.py                  # Media management helper
+├── secrets_template.yaml                     # Template for secrets
+├── configuration_include.yaml                # Configuration include file
+└── README.md                                 # This documentation
 ```
 
-### Contributing
+## 🔒 Security Notes
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+- Never commit `secrets.yaml` to version control
+- Keep API keys secure and rotate regularly
+- Use environment variables in production
+- Consider using Home Assistant's built-in secret management
 
-## License
+## 🤝 Contributing
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Feel free to customize and extend this automation system:
 
-## Support
+- Add more device types
+- Implement weather-based adjustments
+- Add more media sources
+- Create additional wake-up scenarios
+
+## 📞 Support
 
 For issues and questions:
-- [Create an issue](https://github.com/oneofthegeeks/ha-goto/issues) on GitHub
-- Check the [Home Assistant community forums](https://community.home-assistant.io/)
-- Review the logs for detailed error information
+1. Check Home Assistant logs
+2. Verify device connectivity
+3. Test individual components
+4. Review configuration syntax
 
-## Contributing
+## 🎯 Future Enhancements
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+Potential improvements for the system:
 
-## License
+- **Weather Integration**: Adjust wake-up time based on weather
+- **Sleep Tracking**: Integrate with sleep monitoring devices
+- **Voice Commands**: Add voice control for manual triggers
+- **Mobile App**: Create custom mobile interface
+- **Analytics**: Track wake-up effectiveness and patterns
+- **Multi-Room**: Extend to multiple children's rooms
+- **Seasonal Adjustments**: Automatic time changes for daylight saving
+- **Holiday Mode**: Special wake-up routines for holidays
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+---
+
+**Happy Automating! 🌅**

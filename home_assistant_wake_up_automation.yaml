@@ -1,0 +1,379 @@
+# Home Assistant Wake-Up Automation Configuration
+# This automation creates a sunrise-like wake-up experience for your son
+# based on Google Calendar events
+
+# =============================================================================
+# INPUTS AND HELPERS
+# =============================================================================
+
+# Input selectors for customization
+input_select:
+  wake_up_volume:
+    name: "Wake Up Volume"
+    options:
+      - "Low (20%)"
+      - "Medium (40%)"
+      - "High (60%)"
+      - "Very High (80%)"
+    initial: "Medium (40%)"
+    icon: mdi:volume-high
+
+  wake_up_duration:
+    name: "Sunrise Duration"
+    options:
+      - "Quick (5 minutes)"
+      - "Normal (10 minutes)"
+      - "Slow (15 minutes)"
+      - "Very Slow (20 minutes)"
+    initial: "Normal (10 minutes)"
+    icon: mdi:timer
+
+  wake_up_sound:
+    name: "Wake Up Sound"
+    options:
+      - "Nature Sounds"
+      - "Gentle Music"
+      - "Alarm Clock"
+      - "Custom Playlist"
+    initial: "Nature Sounds"
+    icon: mdi:music
+
+# Input booleans for toggles
+input_boolean:
+  enable_wake_up_automation:
+    name: "Enable Wake Up Automation"
+    initial: true
+    icon: mdi:alarm
+
+  enable_tv_wake_up:
+    name: "Enable TV Wake Up"
+    initial: true
+    icon: mdi:television
+
+  enable_light_wake_up:
+    name: "Enable Light Wake Up"
+    initial: true
+    icon: mdi:lightbulb
+
+  enable_speaker_wake_up:
+    name: "Enable Speaker Wake Up"
+    initial: true
+    icon: mdi:speaker
+
+# =============================================================================
+# SENSORS
+# =============================================================================
+
+# Template sensor to get next wake-up time from calendar
+template:
+  - sensor:
+      - name: "Next Wake Up Time"
+        state: >
+          {% set calendar = 'calendar.sons_wake_up_schedule' %}
+          {% set now = now() %}
+          {% set events = state_attr(calendar, 'events') %}
+          {% if events %}
+            {% set next_event = events | selectattr('start', 'ge', now) | first %}
+            {% if next_event %}
+              {{ next_event.start.strftime('%H:%M') }}
+            {% else %}
+              "No upcoming events"
+            {% endif %}
+          {% else %}
+            "No events found"
+          {% endif %}
+        icon: mdi:alarm
+
+# =============================================================================
+# SCRIPTS
+# =============================================================================
+
+script:
+  # Main wake-up sequence script
+  sons_wake_up_sequence:
+    alias: "Son's Wake Up Sequence"
+    description: "Executes the complete wake-up routine"
+    fields:
+      wake_time:
+        description: "Time to start wake-up sequence"
+        example: "07:00"
+    sequence:
+      - service: logbook.log
+        data:
+          name: "Wake Up Automation"
+          message: "Starting wake-up sequence for {{ wake_time }}"
+          entity_id: input_boolean.enable_wake_up_automation
+      
+      # Check if automation is enabled
+      - condition: state
+        entity_id: input_boolean.enable_wake_up_automation
+        state: "on"
+      
+      # Start sunrise light sequence
+      - if:
+          - condition: state
+            entity_id: input_boolean.enable_light_wake_up
+            state: "on"
+        then:
+          - service: script.turn_on
+            target:
+              entity_id: script.sunrise_light_sequence
+      
+      # Start TV wake-up
+      - if:
+          - condition: state
+            entity_id: input_boolean.enable_tv_wake_up
+            state: "on"
+        then:
+          - service: script.turn_on
+            target:
+              entity_id: script.tv_wake_up_sequence
+      
+      # Start audio wake-up
+      - if:
+          - condition: state
+            entity_id: input_boolean.enable_speaker_wake_up
+            state: "on"
+        then:
+          - service: script.turn_on
+            target:
+              entity_id: script.audio_wake_up_sequence
+
+  # Sunrise light sequence
+  sunrise_light_sequence:
+    alias: "Sunrise Light Sequence"
+    description: "Gradually increases bedroom lights to simulate sunrise"
+    sequence:
+      - service: logbook.log
+        data:
+          name: "Sunrise Lights"
+          message: "Starting sunrise light sequence"
+      
+      # Get duration setting and convert to seconds
+      - variables:
+          duration_setting: "{{ states('input_select.wake_up_duration') }}"
+          duration_seconds: >
+            {% if duration_setting == 'Quick (5 minutes)' %}
+              300
+            {% elif duration_setting == 'Normal (10 minutes)' %}
+              600
+            {% elif duration_setting == 'Slow (15 minutes)' %}
+              900
+            {% else %}
+              1200
+            {% endif %}
+      
+      # Turn on lights at minimum brightness
+      - service: light.turn_on
+        target:
+          entity_id: 
+            - light.sons_bedroom_main
+            - light.sons_bedroom_lamp
+            - light.sons_bedroom_strip
+        data:
+          brightness: 1
+          color_temp: 500  # Warm white
+      
+      # Gradually increase brightness over time
+      - repeat:
+          count: 20
+          sequence:
+            - delay:
+                seconds: "{{ duration_seconds / 20 }}"
+            - service: light.turn_on
+              target:
+                entity_id: 
+                  - light.sons_bedroom_main
+                  - light.sons_bedroom_lamp
+                  - light.sons_bedroom_strip
+              data:
+                brightness: "{{ (repeat.index * 12.75) | round(0) }}"
+                color_temp: "{{ 500 - (repeat.index * 20) }}"
+
+  # TV wake-up sequence
+  tv_wake_up_sequence:
+    alias: "TV Wake Up Sequence"
+    description: "Turns on TV and sets to appropriate channel/content"
+    sequence:
+      - service: logbook.log
+        data:
+          name: "TV Wake Up"
+          message: "Starting TV wake-up sequence"
+      
+      # Turn on TV
+      - service: media_player.turn_on
+        target:
+          entity_id: media_player.sons_tv
+      
+      # Wait a moment for TV to boot
+      - delay:
+          seconds: 5
+      
+      # Set to a gentle morning channel or app
+      - service: media_player.select_source
+        target:
+          entity_id: media_player.sons_tv
+        data:
+          source: "YouTube"
+      
+      # Play a gentle morning playlist or nature video
+      - delay:
+          seconds: 3
+      - service: media_player.play_media
+        target:
+          entity_id: media_player.sons_tv
+        data:
+          media_content_id: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Replace with gentle morning content
+          media_content_type: "video/youtube"
+
+  # Audio wake-up sequence
+  audio_wake_up_sequence:
+    alias: "Audio Wake Up Sequence"
+    description: "Plays wake-up audio through Google speaker"
+    sequence:
+      - service: logbook.log
+        data:
+          name: "Audio Wake Up"
+          message: "Starting audio wake-up sequence"
+      
+      # Get volume setting
+      - variables:
+          volume_setting: "{{ states('input_select.wake_up_volume') }}"
+          volume_level: >
+            {% if volume_setting == 'Low (20%)' %}
+              0.2
+            {% elif volume_setting == 'Medium (40%)' %}
+              0.4
+            {% elif volume_setting == 'High (60%)' %}
+              0.6
+            {% else %}
+              0.8
+            {% endif %}
+      
+      # Set speaker volume
+      - service: media_player.volume_set
+        target:
+          entity_id: media_player.sons_google_speaker
+        data:
+          volume_level: "{{ volume_level }}"
+      
+      # Play wake-up sound based on selection
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: input_select.wake_up_sound
+                state: "Nature Sounds"
+            sequence:
+              - service: media_player.play_media
+                target:
+                  entity_id: media_player.sons_google_speaker
+                data:
+                  media_content_id: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav"  # Replace with nature sounds
+                  media_content_type: "music"
+          
+          - conditions:
+              - condition: state
+                entity_id: input_select.wake_up_sound
+                state: "Gentle Music"
+            sequence:
+              - service: media_player.play_media
+                target:
+                  entity_id: media_player.sons_google_speaker
+                data:
+                  media_content_id: "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"  # Replace with gentle morning playlist
+                  media_content_type: "music"
+          
+          - conditions:
+              - condition: state
+                entity_id: input_select.wake_up_sound
+                state: "Alarm Clock"
+            sequence:
+              - service: tts.google_translate_say
+                target:
+                  entity_id: media_player.sons_google_speaker
+                data:
+                  message: "Good morning! Time to wake up!"
+                  language: "en"
+          
+          - conditions:
+              - condition: state
+                entity_id: input_select.wake_up_sound
+                state: "Custom Playlist"
+            sequence:
+              - service: media_player.play_media
+                target:
+                  entity_id: media_player.sons_google_speaker
+                data:
+                  media_content_id: "spotify:playlist:YOUR_CUSTOM_PLAYLIST_ID"  # Replace with your custom playlist
+                  media_content_type: "music"
+
+# =============================================================================
+# AUTOMATIONS
+# =============================================================================
+
+automation:
+  # Main wake-up automation triggered by calendar events
+  - alias: "Son's Wake Up from Calendar"
+    description: "Triggers wake-up sequence based on Google Calendar events"
+    trigger:
+      - platform: calendar
+        entity_id: calendar.sons_wake_up_schedule
+        event: start
+    condition:
+      - condition: state
+        entity_id: input_boolean.enable_wake_up_automation
+        state: "on"
+    action:
+      - service: script.sons_wake_up_sequence
+        data:
+          wake_time: "{{ trigger.calendar_event.start }}"
+    
+    # Backup automation for manual testing
+  - alias: "Manual Wake Up Test"
+    description: "Manual trigger for testing wake-up sequence"
+    trigger:
+      - platform: state
+        entity_id: input_button.test_wake_up
+    action:
+      - service: script.sons_wake_up_sequence
+        data:
+          wake_time: "{{ now().strftime('%H:%M') }}"
+
+# =============================================================================
+# INPUT BUTTONS FOR TESTING
+# =============================================================================
+
+input_button:
+  test_wake_up:
+    name: "Test Wake Up Sequence"
+    icon: mdi:alarm
+
+# =============================================================================
+# SCENES
+# =============================================================================
+
+scene:
+  - name: "Son's Bedroom - Sleep Mode"
+    entities:
+      light.sons_bedroom_main: off
+      light.sons_bedroom_lamp: off
+      light.sons_bedroom_strip: off
+      media_player.sons_tv: off
+      media_player.sons_google_speaker: off
+
+  - name: "Son's Bedroom - Wake Up Complete"
+    entities:
+      light.sons_bedroom_main: 
+        state: on
+        brightness: 255
+        color_temp: 370
+      light.sons_bedroom_lamp: 
+        state: on
+        brightness: 255
+        color_temp: 370
+      light.sons_bedroom_strip: 
+        state: on
+        brightness: 255
+        color_temp: 370
+      media_player.sons_tv: on
+      media_player.sons_google_speaker: on

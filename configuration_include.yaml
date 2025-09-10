@@ -1,0 +1,147 @@
+# Configuration Include File for Home Assistant
+# Add this to your main configuration.yaml file
+
+# =============================================================================
+# INCLUDE CONFIGURATION FILES
+# =============================================================================
+
+# Include the wake-up automation configuration
+automation: !include wake_up_automation.yaml
+script: !include wake_up_automation.yaml
+scene: !include wake_up_automation.yaml
+input_select: !include wake_up_automation.yaml
+input_boolean: !include wake_up_automation.yaml
+input_button: !include wake_up_automation.yaml
+template: !include wake_up_automation.yaml
+
+# Include Google Calendar integration
+calendar: !include google_calendar_integration.yaml
+
+# Include device configuration
+# (This file should be customized with your actual device entities)
+
+# =============================================================================
+# REQUIRED INTEGRATIONS
+# =============================================================================
+
+# Make sure these integrations are installed and configured:
+
+# Google Calendar Integration
+# - Install via HACS or manually
+# - Configure OAuth credentials in secrets.yaml
+# - Add calendar entities
+
+# Media Player Integrations
+# - Google Cast (for Google Home/Nest speakers)
+# - Samsung TV (if using Samsung TV)
+# - LG WebOS TV (if using LG TV)
+# - Spotify (for music streaming)
+
+# Light Integrations
+# - Philips Hue (if using Hue lights)
+# - LIFX (if using LIFX lights)
+# - Z-Wave (if using Z-Wave lights)
+# - Zigbee (if using Zigbee lights)
+
+# =============================================================================
+# OPTIONAL INTEGRATIONS
+# =============================================================================
+
+# These integrations can enhance the wake-up experience:
+
+# Weather Integration
+# - OpenWeatherMap
+# - AccuWeather
+# - Weather Underground
+
+# Notification Integrations
+# - Pushover
+# - Telegram
+# - Email
+# - SMS
+
+# Smart Home Integrations
+# - Climate control
+# - Motorized blinds/curtains
+# - Air purifiers
+# - White noise machines
+
+# =============================================================================
+# PACKAGE STRUCTURE
+# =============================================================================
+
+# Recommended file structure for organizing your configuration:
+# 
+# config/
+# ├── configuration.yaml
+# ├── secrets.yaml
+# ├── packages/
+# │   ├── wake_up_automation/
+# │   │   ├── __init__.yaml
+# │   │   ├── automation.yaml
+# │   │   ├── script.yaml
+# │   │   ├── scene.yaml
+# │   │   ├── input_select.yaml
+# │   │   ├── input_boolean.yaml
+# │   │   ├── input_button.yaml
+# │   │   ├── template.yaml
+# │   │   ├── calendar.yaml
+# │   │   └── device_config.yaml
+# │   └── other_automations/
+# │       └── ...
+# └── www/
+#     └── custom_components/
+#         └── ...
+
+# =============================================================================
+# PACKAGE CONFIGURATION
+# =============================================================================
+
+# If using packages, create a package file:
+# packages:
+#   wake_up_automation: !include_dir_named packages/wake_up_automation/
+
+# =============================================================================
+# CUSTOM COMPONENTS
+# =============================================================================
+
+# Custom components that might be useful:
+# - HACS (Home Assistant Community Store)
+# - Google Calendar integration
+# - Spotify integration
+# - Custom wake-up component
+
+# =============================================================================
+# BACKUP AND RESTORE
+# =============================================================================
+
+# Make sure to backup your configuration regularly:
+# - Use Home Assistant's built-in backup feature
+# - Keep configuration files in version control
+# - Test changes in a development environment first
+
+# =============================================================================
+# TROUBLESHOOTING
+# =============================================================================
+
+# Common issues and solutions:
+# 
+# 1. Calendar not updating:
+#    - Check Google Calendar API credentials
+#    - Verify calendar permissions
+#    - Check Home Assistant logs for errors
+# 
+# 2. Devices not responding:
+#    - Verify entity IDs in configuration
+#    - Check device connectivity
+#    - Restart Home Assistant
+# 
+# 3. Automation not triggering:
+#    - Check automation conditions
+#    - Verify calendar events
+#    - Check Home Assistant logs
+# 
+# 4. Media not playing:
+#    - Check media player entity IDs
+#    - Verify media URLs/playlists
+#    - Check speaker connectivity
