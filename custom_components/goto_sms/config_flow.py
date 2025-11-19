@@ -95,8 +95,10 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 if success:
                     # Dismiss the notification
-                    self.hass.components.persistent_notification.async_dismiss(
-                        "goto_sms_auth_url"
+                    await self.hass.services.async_call(
+                        "persistent_notification",
+                        "dismiss",
+                        {"notification_id": "goto_sms_auth_url"},
                     )
                     
                     # Create the config entry with tokens
@@ -142,11 +144,14 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         _LOGGER.info("Showing OAuth form with auth_url: %s", auth_url)
         
         # Create a persistent notification with the URL so users can see it
-        self.hass.components.persistent_notification.async_create(
-            f"Please visit this URL to authorize GoTo SMS:\n\n{auth_url}\n\n"
-            f"After authorization, copy the redirect URL and paste it in the configuration form.",
-            title="GoTo SMS Authorization",
-            notification_id="goto_sms_auth_url"
+        await self.hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {
+                "message": f"Please visit this URL to authorize GoTo SMS:\n\n{auth_url}\n\nAfter authorization, copy the redirect URL and paste it in the configuration form.",
+                "title": "GoTo SMS Authorization",
+                "notification_id": "goto_sms_auth_url",
+            },
         )
         
         return self.async_show_form(
@@ -203,8 +208,10 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                 if success:
                     # Dismiss the notification
-                    self.hass.components.persistent_notification.async_dismiss(
-                        "goto_sms_reauth_url"
+                    await self.hass.services.async_call(
+                        "persistent_notification",
+                        "dismiss",
+                        {"notification_id": "goto_sms_reauth_url"},
                     )
                     
                     # Update the existing config entry with new tokens
@@ -259,11 +266,14 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         # Create a persistent notification with the URL so users can see it
-        self.hass.components.persistent_notification.async_create(
-            f"Please visit this URL to re-authorize GoTo SMS:\n\n{auth_url}\n\n"
-            f"After authorization, copy the redirect URL and paste it in the configuration form.",
-            title="GoTo SMS Re-authorization",
-            notification_id="goto_sms_reauth_url"
+        await self.hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {
+                "message": f"Please visit this URL to re-authorize GoTo SMS:\n\n{auth_url}\n\nAfter authorization, copy the redirect URL and paste it in the configuration form.",
+                "title": "GoTo SMS Re-authorization",
+                "notification_id": "goto_sms_reauth_url",
+            },
         )
 
         return self.async_show_form(
