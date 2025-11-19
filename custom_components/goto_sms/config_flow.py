@@ -135,25 +135,11 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.info("Using fallback authorization URL: %s", auth_url)
 
         _LOGGER.info("Showing OAuth form with auth_url: %s", auth_url)
-        # Create a simpler form that shows the URL directly
-        description = f"""
-Please authorize the application by visiting this URL:
-
-**{auth_url}**
-
-After authorization, you'll be redirected to a URL like:
-`https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`
-
-Copy the entire URL and paste it below.
-
-**Note:** If you only see an authorization code (without the full URL), you can paste just the code.
-        """
-
+        
         return self.async_show_form(
             step_id="oauth",
             description_placeholders={
                 "auth_url": auth_url,
-                "client_id": self.client_id,
             },
             data_schema=vol.Schema(
                 {
@@ -254,26 +240,10 @@ Copy the entire URL and paste it below.
                 "Using fallback re-authentication authorization URL: %s", auth_url
             )
 
-        description = f"""
-Your GoTo SMS integration needs to be re-authenticated.
-
-Please authorize the application by visiting this URL:
-
-**{auth_url}**
-
-After authorization, you'll be redirected to a URL like:
-`https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`
-
-Copy the entire URL and paste it below.
-
-**Note:** If you only see an authorization code (without the full URL), you can paste just the code.
-        """
-
         return self.async_show_form(
             step_id="reauth_oauth",
             description_placeholders={
                 "auth_url": auth_url,
-                "client_id": self.client_id,
             },
             data_schema=vol.Schema(
                 {
