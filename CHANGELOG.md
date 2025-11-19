@@ -5,6 +5,23 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.10] - 2025-11-19
+
+### Fixed
+- **Config Flow Error**: Fixed 'HomeAssistant' object has no attribute 'components' error
+- **Service Calls**: Changed persistent notification calls to use proper async service pattern
+- **Initialization**: Fixed OAuth manager initialization during config flow
+
+### Technical Improvements
+- **Proper Service Calls**: Use `hass.services.async_call` instead of direct component access
+- **Config Flow Compatibility**: Notification creation now works correctly during setup
+- **Error Handling**: Eliminated attribute access errors during integration setup
+
+### What This Fixes
+- ✅ **No more initialization errors** during OAuth setup
+- ✅ **Notifications work properly** using correct Home Assistant patterns
+- ✅ **Stable config flow** without component attribute errors
+
 ## [1.3.9] - 2025-11-19
 
 ### Added
