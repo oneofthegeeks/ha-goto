@@ -100,7 +100,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "dismiss",
                         {"notification_id": "goto_sms_auth_url"},
                     )
-                    
+
                     # Create the config entry with tokens
                     config_data = {
                         CONF_CLIENT_ID: self.client_id,
@@ -142,7 +142,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.info("Using fallback authorization URL: %s", auth_url)
 
         _LOGGER.info("Showing OAuth form with auth_url: %s", auth_url)
-        
+
         # Create a persistent notification with the URL so users can see it
         await self.hass.services.async_call(
             "persistent_notification",
@@ -153,7 +153,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "notification_id": "goto_sms_auth_url",
             },
         )
-        
+
         return self.async_show_form(
             step_id="oauth",
             description_placeholders={
@@ -213,7 +213,7 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         "dismiss",
                         {"notification_id": "goto_sms_reauth_url"},
                     )
-                    
+
                     # Update the existing config entry with new tokens
                     config_entry = self.hass.config_entries.async_get_entry(
                         self.context["entry_id"]
