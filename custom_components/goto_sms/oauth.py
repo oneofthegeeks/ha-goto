@@ -496,7 +496,10 @@ class GoToOAuth2Manager:
 
                         await self.hass.config_entries.flow.async_init(
                             DOMAIN,
-                            context={"source": config_entries.SOURCE_REAUTH},
+                            context={
+                                "source": config_entries.SOURCE_REAUTH,
+                                "entry_id": self.config_entry.entry_id,
+                            },
                             data=self.config_entry.data,
                         )
                     except Exception as e:
@@ -517,7 +520,10 @@ class GoToOAuth2Manager:
 
             await self.hass.config_entries.flow.async_init(
                 DOMAIN,
-                context={"source": config_entries.SOURCE_REAUTH},
+                context={
+                    "source": config_entries.SOURCE_REAUTH,
+                    "entry_id": self.config_entry.entry_id,
+                },
                 data=self.config_entry.data,
             )
         except Exception as e:
@@ -533,7 +539,10 @@ class GoToOAuth2Manager:
             self.hass.async_create_task(
                 self.hass.config_entries.flow.async_init(
                     DOMAIN,
-                    context={"source": config_entries.SOURCE_REAUTH},
+                    context={
+                        "source": config_entries.SOURCE_REAUTH,
+                        "entry_id": self.config_entry.entry_id,
+                    },
                     data=config_data,
                 )
             )

@@ -179,7 +179,8 @@ After updating:
 1. **Create OAuth2 Application:**
    - Log into your GoTo Connect developer portal
    - Create a new OAuth2 application
-   - Set the redirect URI to `https://home-assistant.io/auth/callback`
+   - Set the redirect URI to `http://localhost:8123/auth/external/callback`
+     - If you access Home Assistant via a different URL, use that base URL instead (e.g., `http://homeassistant.local:8123/auth/external/callback`)
    - Note your Client ID and Client Secret
 
 2. **Configure Integration:**
