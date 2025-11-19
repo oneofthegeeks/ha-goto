@@ -5,6 +5,24 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.9] - 2025-11-19
+
+### Added
+- **Persistent Notification**: OAuth authorization URL now displays as a clickable notification
+- **Auto-dismiss**: Notification automatically dismisses after successful authorization
+- **Better UX**: Users can now easily see and click the authorization URL
+
+### Technical Improvements
+- **Persistent Notification Integration**: Added notification creation during OAuth flow
+- **Notification Management**: Auto-dismiss notifications on success for both setup and reauth
+- **Improved Visibility**: URL is now prominently displayed in notification panel
+
+### What This Fixes
+- ✅ **Authorization URL is now visible** in a persistent notification
+- ✅ **Clickable URL** for easy access to OAuth authorization page
+- ✅ **Clear instructions** displayed directly in the notification
+- ✅ **Works for both** initial setup and re-authentication flows
+
 ## [1.3.8] - 2025-11-19
 
 ### Fixed
