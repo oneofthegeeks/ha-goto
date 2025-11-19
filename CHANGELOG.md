@@ -5,6 +5,26 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.8] - 2025-11-19
+
+### Fixed
+- **OAuth Flow**: Fixed authorization URL not displaying in config flow
+- **Reauth Context**: Fixed missing `entry_id` in reauth flow context causing KeyError
+- **Config Flow Display**: Simplified OAuth form to properly display authorization URL using translation file
+- **Redirect URI**: Updated documentation to use local callback URL instead of public URL
+
+### Technical Improvements
+- **Config Flow**: Removed unused description variable and properly use `description_placeholders`
+- **Translation Strings**: Updated to use plain text formatting for better UI compatibility
+- **Reauth Flow**: Added required `entry_id` to all reauth context initializations
+- **Documentation**: Updated README with local callback URL guidance for OAuth setup
+
+### What This Fixes
+- ✅ **Authorization URL now displays** properly during initial setup
+- ✅ **No more `'entry_id'` KeyError** during re-authentication
+- ✅ **Clearer OAuth instructions** with local callback URL examples
+- ✅ **Better user experience** during OAuth configuration
+
 ## [1.3.7] - 2025-01-04
 
 ### Fixed
