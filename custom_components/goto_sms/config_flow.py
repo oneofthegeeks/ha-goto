@@ -94,6 +94,11 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 success = await self.oauth_manager.fetch_token(authorization_response)
 
                 if success:
+                    # Dismiss the notification
+                    self.hass.components.persistent_notification.async_dismiss(
+                        "goto_sms_auth_url"
+                    )
+                    
                     # Create the config entry with tokens
                     config_data = {
                         CONF_CLIENT_ID: self.client_id,
@@ -135,6 +140,14 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.info("Using fallback authorization URL: %s", auth_url)
 
         _LOGGER.info("Showing OAuth form with auth_url: %s", auth_url)
+        
+        # Create a persistent notification with the URL so users can see it
+        self.hass.components.persistent_notification.async_create(
+            f"Please visit this URL to authorize GoTo SMS:\n\n{auth_url}\n\n"
+            f"After authorization, copy the redirect URL and paste it in the configuration form.",
+            title="GoTo SMS Authorization",
+            notification_id="goto_sms_auth_url"
+        )
         
         return self.async_show_form(
             step_id="oauth",
@@ -189,6 +202,11 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 success = await self.oauth_manager.fetch_token(authorization_response)
 
                 if success:
+                    # Dismiss the notification
+                    self.hass.components.persistent_notification.async_dismiss(
+                        "goto_sms_reauth_url"
+                    )
+                    
                     # Update the existing config entry with new tokens
                     config_entry = self.hass.config_entries.async_get_entry(
                         self.context["entry_id"]
@@ -239,6 +257,14 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.info(
                 "Using fallback re-authentication authorization URL: %s", auth_url
             )
+
+        # Create a persistent notification with the URL so users can see it
+        self.hass.components.persistent_notification.async_create(
+            f"Please visit this URL to re-authorize GoTo SMS:\n\n{auth_url}\n\n"
+            f"After authorization, copy the redirect URL and paste it in the configuration form.",
+            title="GoTo SMS Re-authorization",
+            notification_id="goto_sms_reauth_url"
+        )
 
         return self.async_show_form(
             step_id="reauth_oauth",
