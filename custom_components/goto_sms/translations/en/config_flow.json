@@ -11,16 +11,16 @@
       },
       "oauth": {
         "title": "OAuth2 Authorization",
-        "description": "Please authorize the application by visiting this URL:\n\n**{auth_url}**\n\nAfter authorization, you'll be redirected to a URL like:\n`https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`\n\nCopy the entire URL and paste it below.",
+        "description": "Click or copy this URL to authorize:\n\n{auth_url}\n\nAfter authorization, copy the full redirect URL (it will look like: https://home-assistant.io/auth/callback?code=...) and paste it in the field below.\n\nIf you only get a code, you can paste just the code.",
         "data": {
-          "authorization_response": "Authorization Response"
+          "authorization_response": "Authorization Response URL or Code"
         }
       },
       "reauth_oauth": {
         "title": "Re-authentication Required",
-        "description": "Your GoTo SMS integration needs to be re-authenticated.\n\nPlease authorize the application by visiting this URL:\n\n**{auth_url}**\n\nAfter authorization, you'll be redirected to a URL like:\n`https://home-assistant.io/auth/callback?code=AUTHORIZATION_CODE`\n\nCopy the entire URL and paste it below.",
+        "description": "Your GoTo SMS integration needs to be re-authenticated.\n\nClick or copy this URL to authorize:\n\n{auth_url}\n\nAfter authorization, copy the full redirect URL (it will look like: https://home-assistant.io/auth/callback?code=...) and paste it in the field below.\n\nIf you only get a code, you can paste just the code.",
         "data": {
-          "authorization_response": "Authorization Response"
+          "authorization_response": "Authorization Response URL or Code"
         }
       }
     },
