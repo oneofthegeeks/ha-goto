@@ -63,7 +63,11 @@ class GoToOAuth2Manager:
             _LOGGER.debug("Loading tokens from config entry")
 
             tokens = self.config_entry.data.get("tokens", {})
-            _LOGGER.debug("Found tokens in config entry: %s", bool(tokens))
+            _LOGGER.debug(
+                "Found %d token key(s) in config entry: %s",
+                len(tokens),
+                list(tokens.keys()),
+            )
 
             if not tokens:
                 _LOGGER.warning("No tokens found in config entry")
