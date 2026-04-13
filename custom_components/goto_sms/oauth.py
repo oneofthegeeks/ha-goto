@@ -1,19 +1,17 @@
 """OAuth2 token management for GoTo SMS integration."""
 
-import json
+import asyncio
+import base64
 import logging
-import os
+import re
+import urllib.parse
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 
-import requests
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from oauthlib.oauth2.rfc6749.errors import TokenExpiredError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from requests_oauthlib import OAuth2Session
-
-# Allow HTTP for development (disable SSL verification warnings)
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
 from .const import (
     CONF_ACCESS_TOKEN,
@@ -62,13 +60,10 @@ class GoToOAuth2Manager:
                 _LOGGER.warning("No config entry available for token loading")
                 return False
 
-            _LOGGER.info(
-                "Loading tokens from config entry. Config entry data: %s",
-                self.config_entry.data,
-            )
+            _LOGGER.debug("Loading tokens from config entry")
 
             tokens = self.config_entry.data.get("tokens", {})
-            _LOGGER.info("Found tokens in config entry: %s", tokens)
+            _LOGGER.debug("Found tokens in config entry: %s", bool(tokens))
 
             if not tokens:
                 _LOGGER.warning("No tokens found in config entry")
@@ -78,7 +73,7 @@ class GoToOAuth2Manager:
                 return False
 
             self._tokens = tokens
-            _LOGGER.info("Tokens loaded into memory: %s", self._tokens)
+            _LOGGER.debug("Tokens loaded into memory")
 
             if not self._validate_tokens():
                 _LOGGER.warning("Invalid or expired tokens found")
@@ -119,14 +114,6 @@ class GoToOAuth2Manager:
     async def _async_update_config_entry(self, data):
         """Update config entry asynchronously."""
         try:
-            self.hass.config_entries.async_update_entry(self.config_entry, data=data)
-        except Exception as e:
-            _LOGGER.error("Failed to update config entry: %s", e)
-
-    def _update_config_entry_sync(self, data):
-        """Update config entry synchronously (called from executor)."""
-        try:
-            # Use the sync version of the config entry update
             self.hass.config_entries.async_update_entry(self.config_entry, data=data)
         except Exception as e:
             _LOGGER.error("Failed to update config entry: %s", e)
@@ -190,11 +177,6 @@ class GoToOAuth2Manager:
             scope=OAUTH2_SCOPE,
         )
 
-        # Allow HTTP for development (disable SSL verification warnings)
-        import os
-
-        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
-
         auth_url = auth_session.authorization_url(OAUTH2_AUTHORIZE_URL)[0]
         _LOGGER.info("Generated authorization URL: %s", auth_url)
         return auth_url
@@ -202,10 +184,6 @@ class GoToOAuth2Manager:
     async def fetch_token(self, authorization_response: str) -> bool:
         """Fetch tokens using authorization response."""
         try:
-            import base64
-            import re
-            import urllib.parse
-
             # Try different ways to extract the authorization code
             code = None
 
@@ -266,9 +244,6 @@ class GoToOAuth2Manager:
                 "redirect_uri": "https://home-assistant.io/auth/callback",
             }
 
-            # Use Home Assistant's async HTTP client
-            from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
             session = async_get_clientsession(self.hass)
 
             # Make the token request asynchronously
@@ -322,8 +297,6 @@ class GoToOAuth2Manager:
                     _LOGGER.error("No refresh token available")
                     return False
 
-                import base64
-
                 # Create Basic auth header with client credentials
                 credentials = f"{self.client_id}:{self.client_secret}"
                 encoded_credentials = base64.b64encode(credentials.encode()).decode()
@@ -339,9 +312,6 @@ class GoToOAuth2Manager:
                     retry_count + 1,
                     max_retries,
                 )
-
-                # Use Home Assistant's async HTTP client
-                from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
                 session = async_get_clientsession(self.hass)
 
@@ -400,8 +370,6 @@ class GoToOAuth2Manager:
                         # For other errors, retry after a short delay
                         retry_count += 1
                         if retry_count < max_retries:
-                            import asyncio
-
                             await asyncio.sleep(
                                 2**retry_count
                             )  # Exponential backoff: 2s, 4s, 8s
@@ -412,8 +380,6 @@ class GoToOAuth2Manager:
                 )
                 retry_count += 1
                 if retry_count < max_retries:
-                    import asyncio
-
                     await asyncio.sleep(2**retry_count)  # Exponential backoff
 
         # If we get here, all retries failed
@@ -512,39 +478,3 @@ class GoToOAuth2Manager:
                 _LOGGER.warning("No config entry available for re-authentication")
         except Exception as e:
             _LOGGER.error("Failed to trigger re-authentication: %s", e)
-
-    async def _async_trigger_reauth(self):
-        """Async method to trigger re-authentication."""
-        try:
-            from homeassistant import config_entries
-
-            await self.hass.config_entries.flow.async_init(
-                DOMAIN,
-                context={
-                    "source": config_entries.SOURCE_REAUTH,
-                    "entry_id": self.config_entry.entry_id,
-                },
-                data=self.config_entry.data,
-            )
-        except Exception as e:
-            _LOGGER.error("Failed to trigger re-authentication flow: %s", e)
-
-    def _init_reauth_flow_sync(self, config_data):
-        """Initialize re-authentication flow synchronously (called from executor)."""
-        try:
-            from homeassistant import config_entries
-
-            # This will be called in the executor thread
-            # The actual async_init will be handled by Home Assistant
-            self.hass.async_create_task(
-                self.hass.config_entries.flow.async_init(
-                    DOMAIN,
-                    context={
-                        "source": config_entries.SOURCE_REAUTH,
-                        "entry_id": self.config_entry.entry_id,
-                    },
-                    data=config_data,
-                )
-            )
-        except Exception as e:
-            _LOGGER.error("Failed to initialize re-authentication flow: %s", e)

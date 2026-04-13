@@ -1,16 +1,16 @@
 """GoTo SMS notification service."""
 
+import asyncio
 import logging
-from datetime import datetime
 from typing import Any, Dict, Optional
 
-import requests
 from homeassistant.components.notify import (
     ATTR_MESSAGE,
     ATTR_TARGET,
     BaseNotificationService,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.template import Template, TemplateError
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -168,9 +168,6 @@ class GoToSMSNotificationService(BaseNotificationService):
                     message[:50] + "..." if len(message) > 50 else message,
                 )
 
-                # Use Home Assistant's async HTTP client
-                from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
                 session = async_get_clientsession(self.hass)
 
                 async with session.post(
@@ -215,8 +212,6 @@ class GoToSMSNotificationService(BaseNotificationService):
                             max_retries + 1,
                         )
                         if retry_count < max_retries:
-                            import asyncio
-
                             wait_time = 2 ** (
                                 retry_count + 1
                             )  # Exponential backoff: 2s, 4s
@@ -248,8 +243,6 @@ class GoToSMSNotificationService(BaseNotificationService):
                     e,
                 )
                 if retry_count < max_retries:
-                    import asyncio
-
                     wait_time = 2 ** (retry_count + 1)  # Exponential backoff
                     _LOGGER.info("Waiting %d seconds before retry...", wait_time)
                     await asyncio.sleep(wait_time)
