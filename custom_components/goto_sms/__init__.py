@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -10,15 +10,12 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_interval
 
-from . import config_flow
 from .const import DOMAIN
 from .oauth import GoToOAuth2Manager
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.NOTIFY]
-
-_LOGGER.info("GoTo SMS integration loaded")
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -71,12 +68,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         notify_service = get_service(hass, {})
         if notify_service:
-            message = call.data.get("message")
-            target = call.data.get("target")
-            sender_id = call.data.get("sender_id")
-
-            if notify_service:
-                await notify_service.async_send_message_service(call)
+            await notify_service.async_send_message_service(call)
 
     # Register the service with schema for form interface
     hass.services.async_register(

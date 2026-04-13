@@ -5,10 +5,8 @@ from typing import Any, Dict, Optional
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import config_validation as cv
 
 from .const import (
     CONF_CLIENT_ID,
@@ -291,11 +289,3 @@ class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_import(self, import_info: Dict[str, Any]) -> FlowResult:
         """Handle import from configuration.yaml."""
         return await self.async_step_user(import_info)
-
-
-class InvalidCredentials(HomeAssistantError):
-    """Error to indicate there is invalid auth."""
-
-
-class OAuth2Error(HomeAssistantError):
-    """Error to indicate there is an OAuth2 error."""
