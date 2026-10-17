@@ -1,4 +1,2 @@
 pytest-homeassistant-custom-component
 gotoconnect==0.1.0
-# v1 modules (oauth.py) still import this; drop when v1 code is removed
-requests_oauthlib

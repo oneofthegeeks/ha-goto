@@ -1,147 +1,99 @@
 """The GoTo SMS integration."""
 
-import asyncio
-import logging
-from datetime import timedelta
-from typing import Any
+from __future__ import annotations
 
+import logging
+from dataclasses import dataclass
+
+from aiohttp import ClientError, ClientResponseError
+from gotoconnect import GoToAuthError, GoToError, GoToMessaging
+from homeassistant.components.notify.legacy import NOTIFY_SERVICES
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import discovery
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.config_entry_oauth2_flow import (
+    OAuth2Session,
+    async_get_config_entry_implementation,
+)
+from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
-from .oauth import GoToOAuth2Manager
+from .migration import async_migrate_entry  # noqa: F401  (HA looks it up here)
+from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.NOTIFY]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+@dataclass
+class GoToData:
+    """Runtime objects for a loaded entry."""
+
+    messaging: GoToMessaging
+    session: OAuth2Session
+
+
+type GoToConfigEntry = ConfigEntry[GoToData]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the action once, independent of entries."""
+    async_setup_services(hass)
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: GoToConfigEntry) -> bool:
     """Set up GoTo SMS from a config entry."""
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = entry.data
+    # A migrated v1 entry that never had tokens must reauth, not refresh None.
+    if not entry.data.get("token", {}).get("refresh_token"):
+        raise ConfigEntryAuthFailed("No refresh token; sign in to GoTo again")
 
-    # Create OAuth manager for this config entry
-    oauth_manager = GoToOAuth2Manager(hass, entry)
-
-    # Store the OAuth manager in hass.data for access by other components
-    hass.data[DOMAIN][f"{entry.entry_id}_oauth"] = oauth_manager
-
-    # Validate and refresh tokens on startup
-    async def startup_token_validation():
-        """Validate and refresh tokens on startup."""
-        try:
-            _LOGGER.info("Running startup token validation")
-
-            # Load tokens
-            if not await oauth_manager.load_tokens():
-                _LOGGER.warning("No tokens found during startup validation")
-                return
-
-            # Check if tokens need refresh
-            if not oauth_manager._validate_tokens():
-                _LOGGER.info("Tokens need refresh on startup, refreshing...")
-                if await oauth_manager.refresh_tokens():
-                    _LOGGER.info("Startup token refresh successful")
-                else:
-                    _LOGGER.warning(
-                        "Startup token refresh failed - will retry on next use"
-                    )
-            else:
-                _LOGGER.info("Tokens are valid on startup")
-
-        except Exception as e:
-            _LOGGER.error("Error during startup token validation: %s", e)
-            # Don't fail the integration startup, just log the error
-
-    # Run startup validation after a short delay to ensure everything is loaded
-    hass.async_create_task(
-        asyncio.sleep(5)  # Wait 5 seconds for everything to initialize
-    ).add_done_callback(lambda _: hass.async_create_task(startup_token_validation()))
-
-    # Register the SMS service with proper schema
-    async def handle_send_sms(call):
-        """Handle the send SMS service call."""
-        from .notify import get_service
-
-        notify_service = get_service(hass, {})
-        if notify_service:
-            await notify_service.async_send_message_service(call)
-
-    # Register the service with schema for form interface
-    hass.services.async_register(
-        DOMAIN,
-        "send_sms",
-        handle_send_sms,
-    )
-
-    # Set up periodic token refresh
-    async def refresh_tokens_periodic(now):
-        """Periodically refresh tokens to keep them fresh."""
-        try:
-            _LOGGER.debug("Running periodic token refresh check")
-
-            # Load tokens if not already loaded
-            if not oauth_manager._tokens:
-                if not await oauth_manager.load_tokens():
-                    _LOGGER.debug("No tokens available for periodic refresh")
-                    return
-
-            # Check if tokens need refresh (using the same validation logic)
-            if not oauth_manager._validate_tokens():
-                _LOGGER.info("Proactively refreshing tokens before expiry")
-                if await oauth_manager.refresh_tokens():
-                    _LOGGER.info("Periodic token refresh successful")
-                else:
-                    _LOGGER.warning(
-                        "Periodic token refresh failed - will retry on next use"
-                    )
-            else:
-                _LOGGER.debug("Tokens are still valid, no refresh needed")
-
-        except Exception as e:
-            _LOGGER.error("Error during periodic token refresh: %s", e)
-            # Don't fail the periodic refresh, just log the error
-
-    # Run token refresh every 30 minutes
-    entry.async_on_unload(
-        async_track_time_interval(hass, refresh_tokens_periodic, timedelta(minutes=30))
-    )
-
-    return True
-
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
     try:
-        # Remove the service
-        hass.services.async_remove(DOMAIN, "send_sms")
+        implementation = await async_get_config_entry_implementation(hass, entry)
+    except ValueError as err:  # client credentials missing (e.g. v1 had none)
+        raise ConfigEntryAuthFailed("GoTo client credentials are missing") from err
 
-        # Clean up the data
-        if DOMAIN in hass.data:
-            hass.data[DOMAIN].pop(entry.entry_id, None)
-            hass.data[DOMAIN].pop(f"{entry.entry_id}_oauth", None)
+    session = OAuth2Session(hass, entry, implementation)
 
-        _LOGGER.info("GoTo SMS integration unloaded successfully")
-        return True
-    except Exception as e:
-        _LOGGER.error("Error unloading GoTo SMS integration: %s", e)
-        return False
+    async def _token() -> str:
+        """Token provider for gotoconnect; maps refresh failures to its errors."""
+        try:
+            await session.async_ensure_token_valid()
+        except ClientResponseError as err:
+            if 400 <= err.status < 500:
+                raise GoToAuthError("Token refresh rejected") from err
+            raise GoToError("Token refresh failed") from err
+        except ClientError as err:
+            raise GoToError("Token refresh failed") from err
+        return session.token["access_token"]
 
+    try:
+        await _token()  # surface a dead refresh token at setup, not first send
+    except GoToAuthError as err:
+        raise ConfigEntryAuthFailed(str(err)) from err
+    except GoToError as err:
+        raise ConfigEntryNotReady(str(err)) from err
 
-async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
-    """Set up the GoTo SMS component."""
-    _LOGGER.info("Setting up GoTo SMS integration")
-    hass.data.setdefault(DOMAIN, {})
+    entry.runtime_data = GoToData(
+        messaging=GoToMessaging(_token, session=async_get_clientsession(hass)),
+        session=session,
+    )
 
-    # The notification service will be registered by the notify platform
-    # when the integration is loaded via config entry
-
-    _LOGGER.info("GoTo SMS integration setup complete")
+    # Legacy notify.goto_sms: discovery name makes the service "goto_sms".
+    await discovery.async_load_platform(
+        hass, "notify", DOMAIN, {CONF_NAME: DOMAIN}, {}
+    )
     return True
 
 
-# v1 -> v2 entry migration lives in migration.py (Task 5 rewrites this file).
-from .migration import async_migrate_entry  # noqa: E402,F401
+async def async_unload_entry(hass: HomeAssistant, entry: GoToConfigEntry) -> bool:
+    """Unload: drop the legacy notify service so a reload can re-register it."""
+    hass.services.async_remove("notify", DOMAIN)
+    # Without this the dispatcher would see a stale service object on reload.
+    hass.data.get(NOTIFY_SERVICES, {}).pop(DOMAIN, None)
+    return True

@@ -13,7 +13,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 
-from .const import DOMAIN, OAUTH2_SCOPE
+from .const import DOMAIN, OAUTH_SCOPES
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "refresh_token": tokens.get("refresh_token"),
         "expires_at": _expires_at(tokens.get("token_expires_at")),
         "token_type": "Bearer",
-        "scope": OAUTH2_SCOPE,
+        "scope": " ".join(OAUTH_SCOPES),
     }
     hass.config_entries.async_update_entry(
         entry,

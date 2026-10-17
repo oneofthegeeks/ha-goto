@@ -17,7 +17,6 @@ send_sms:
       example: "+1234567890"
       selector:
         text:
-          pattern: "^\\+[1-9]\\d{1,14}$"
     sender_id:
       name: "Sender Phone Number"
       description: "The GoTo phone number to send the SMS from (with country code)"
@@ -25,7 +24,6 @@ send_sms:
       example: "+1234567890"
       selector:
         text:
-          pattern: "^\\+[1-9]\\d{1,14}$"
     data:
       name: "Template Data"
       description: "Optional data for template rendering"
