@@ -1,2 +1,4 @@
 pytest-homeassistant-custom-component
 gotoconnect==0.1.0
+mutagen
+ha-ffmpeg

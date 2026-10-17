@@ -6,10 +6,12 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
-from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlowResult
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntry, ConfigFlowResult
+from homeassistant.core import callback
 from homeassistant.helpers import config_entry_oauth2_flow
 
 from .const import DOMAIN
+from .options_flow import GoToOptionsFlow
 
 
 class GoToOAuthFlowHandler(
@@ -25,6 +27,12 @@ class GoToOAuthFlowHandler(
     # Task 4 (migration) depends on these exact numbers.
     VERSION = 2
     MINOR_VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> GoToOptionsFlow:
+        """Options hold the optional SIP (voice) settings."""
+        return GoToOptionsFlow()
 
     @property
     def logger(self) -> logging.Logger:
