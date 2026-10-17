@@ -21,7 +21,12 @@ from homeassistant.core import (
     ServiceResponse,
     SupportsResponse,
 )
-from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.exceptions import (
+    HomeAssistantError,
+    ServiceValidationError,
+    Unauthorized,
+    UnknownUser,
+)
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.template import Template, TemplateError
 
@@ -79,14 +84,22 @@ PREFERRED_8K_WAV = {
 }
 
 
-def _render(hass: HomeAssistant, message: str, variables: dict[str, Any]) -> str:
-    """Render HA templates in the message; on failure send it unrendered (v1 behaviour)."""
+def _render(
+    hass: HomeAssistant, message: str, variables: dict[str, Any], strict: bool = False
+) -> str:
+    """Render HA templates in the message.
+
+    SMS (strict=False) falls back to the raw text on failure (v1 behaviour); a
+    voice call must never read raw template syntax aloud, so strict raises.
+    """
     if "{{" not in message or "}}" not in message:
         return message
     try:
         return str(Template(message, hass).async_render(variables, parse_result=False))
     except TemplateError as err:
         _LOGGER.error("Template rendering failed: %s", err)
+        if strict:
+            raise ServiceValidationError(f"Message template failed to render: {err}") from err
         return message
 
 
@@ -138,11 +151,21 @@ async def _synthesize(
 
     resolved = tts.async_resolve_engine(hass, engine)
     if resolved is None:
+        if engine:
+            raise ServiceValidationError(f"Unknown text-to-speech engine: {engine}")
         raise ServiceValidationError("No text-to-speech engine is available")
     try:
+        # Only validates language/options against the engine; no audio yet.
         source_id = generate_media_source_id(
             hass, text, resolved, language, dict(PREFERRED_8K_WAV)
         )
+    except HomeAssistantError as err:
+        if language:
+            raise ServiceValidationError(
+                f"Language '{language}' is not supported by {resolved}"
+            ) from err
+        raise HomeAssistantError(f"Text-to-speech failed: {err}") from err
+    try:
         extension, audio = await tts.async_get_media_source_audio(hass, source_id)
     except HomeAssistantError as err:
         raise HomeAssistantError(f"Text-to-speech failed: {err}") from err
@@ -171,7 +194,7 @@ async def async_call_tts(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             translation_key="sip_not_configured",
         )
 
-    text = _render(hass, data[ATTR_MESSAGE], {})
+    text = _render(hass, data[ATTR_MESSAGE], {}, strict=True)
     wav = await _synthesize(hass, text, data.get(ATTR_TTS_ENGINE), data.get(ATTR_LANGUAGE))
 
     # Fresh instance per call: GoToVoice holds per-call SIP state.
@@ -217,6 +240,15 @@ def async_setup_services(hass: HomeAssistant) -> None:
         )
 
     async def _call_tts(call: ServiceCall) -> ServiceResponse:
+        # This dials real phones, so admin-only. Same check as
+        # helpers.service.async_register_admin_service, which can't return a
+        # response in HA 2025.1. No user_id (automations) is allowed.
+        if call.context.user_id:
+            user = await hass.auth.async_get_user(call.context.user_id)
+            if user is None:
+                raise UnknownUser(context=call.context)
+            if not user.is_admin:
+                raise Unauthorized(context=call.context)
         return await async_call_tts(hass, dict(call.data))
 
     hass.services.async_register(

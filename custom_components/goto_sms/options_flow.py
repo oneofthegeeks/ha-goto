@@ -33,6 +33,11 @@ class GoToOptionsFlow(OptionsFlow):
         errors: dict[str, str] = {}
         if user_input is not None:
             data = {k: v.strip() for k, v in user_input.items() if v and v.strip()}
+            # The password is never sent to the frontend; blank keeps the stored one.
+            if not data.get(CONF_SIP_PASSWORD) and data.get(CONF_SIP_USERNAME):
+                stored = self.config_entry.options.get(CONF_SIP_PASSWORD)
+                if stored:
+                    data[CONF_SIP_PASSWORD] = stored
             if bool(data.get(CONF_SIP_USERNAME)) != bool(data.get(CONF_SIP_PASSWORD)):
                 errors["base"] = "sip_incomplete"
             elif not data.get(CONF_SIP_USERNAME):
@@ -52,7 +57,11 @@ class GoToOptionsFlow(OptionsFlow):
                 vol.Optional(CONF_SIP_PROXY): text,
             }
         )
-        suggested = user_input or {k: self.config_entry.options.get(k) for k in _KEYS}
+        suggested = {
+            k: (user_input or self.config_entry.options).get(k)
+            for k in _KEYS
+            if k != CONF_SIP_PASSWORD
+        }
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(schema, suggested),

@@ -140,3 +140,81 @@ async def test_options_flow_incomplete_and_clear(hass: HomeAssistant, setup_entr
     res = await hass.config_entries.options.async_configure(res["flow_id"], {})
     assert res["type"] == "create_entry"
     assert setup_entry.options == {}
+
+
+# ---- review fixes ----
+async def test_template_failure_not_spoken(hass: HomeAssistant, setup_entry, voice, synth) -> None:
+    hass.config_entries.async_update_entry(setup_entry, options=SIP)
+    with pytest.raises(ServiceValidationError, match="template"):
+        await call(hass, message="x {{ 1/0 }} y")
+    synth.assert_not_awaited()
+    voice.cls.assert_not_called()
+
+
+async def test_unknown_engine_vs_none(hass: HomeAssistant) -> None:
+    from homeassistant.components import tts
+
+    from custom_components.goto_sms import services
+
+    hass.config.components.add("tts")
+    with patch.object(tts, "async_resolve_engine", return_value=None):
+        with pytest.raises(ServiceValidationError, match="Unknown text-to-speech engine: tts.nope"):
+            await services._synthesize(hass, "hi", "tts.nope", None)
+        with pytest.raises(ServiceValidationError, match="No text-to-speech engine is available"):
+            await services._synthesize(hass, "hi", None, None)
+
+
+async def test_bad_language(hass: HomeAssistant) -> None:
+    from homeassistant.components import tts
+
+    from custom_components.goto_sms import services
+
+    hass.config.components.add("tts")
+    with patch.object(tts, "async_resolve_engine", return_value="tts.x"), patch(
+        "homeassistant.components.tts.media_source.generate_media_source_id",
+        side_effect=HomeAssistantError("Language 'xx' not supported"),
+    ):
+        with pytest.raises(ServiceValidationError, match="Language 'xx' is not supported by tts.x"):
+            await services._synthesize(hass, "hi", None, "xx")
+
+
+async def test_options_blank_password_keeps_stored(hass: HomeAssistant, setup_entry) -> None:
+    hass.config_entries.async_update_entry(setup_entry, options=SIP)
+    res = await hass.config_entries.options.async_init(setup_entry.entry_id)
+    schema = {str(k): k for k in res["data_schema"].schema}
+    assert schema["sip_username"].description["suggested_value"] == "u"
+    assert "suggested_value" not in (schema["sip_password"].description or {})  # never echoed
+    res = await hass.config_entries.options.async_configure(
+        res["flow_id"], {"sip_username": "u2", "sip_server": "reg.jiveip.net"}
+    )
+    assert res["type"] == "create_entry"
+    assert setup_entry.options["sip_password"] == "p"
+    assert setup_entry.options["sip_username"] == "u2"
+
+
+async def test_options_new_password_replaces(hass: HomeAssistant, setup_entry) -> None:
+    hass.config_entries.async_update_entry(setup_entry, options=SIP)
+    res = await hass.config_entries.options.async_init(setup_entry.entry_id)
+    await hass.config_entries.options.async_configure(
+        res["flow_id"], {"sip_username": "u", "sip_password": "new"}
+    )
+    assert setup_entry.options["sip_password"] == "new"
+
+
+async def test_call_tts_admin_only(hass: HomeAssistant, setup_entry, voice, synth, hass_admin_user, hass_read_only_user) -> None:
+    from homeassistant.core import Context
+    from homeassistant.exceptions import Unauthorized
+
+    hass.config_entries.async_update_entry(setup_entry, options=SIP)
+    data = {**BASE}
+    with pytest.raises(Unauthorized):
+        await hass.services.async_call(
+            DOMAIN, "call_tts", data, blocking=True, return_response=True,
+            context=Context(user_id=hass_read_only_user.id),
+        )
+    voice.cls.assert_not_called()
+    # Admin user and no-context (automation) both work.
+    for ctx in (Context(user_id=hass_admin_user.id), Context()):
+        assert (await hass.services.async_call(
+            DOMAIN, "call_tts", data, blocking=True, return_response=True, context=ctx
+        ))["answered"]

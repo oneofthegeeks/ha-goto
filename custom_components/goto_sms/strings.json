@@ -41,12 +41,13 @@
         },
         "data_description": {
           "sip_server": "Usually reg.jiveip.net (shown as the SIP server/registrar on the device page).",
-          "sip_proxy": "Account-specific, e.g. youraccount.jive.rtcfront.net. Required for most accounts; shown as the outbound proxy on the device page."
+          "sip_proxy": "Account-specific, e.g. youraccount.jive.rtcfront.net. Required for most accounts; shown as the outbound proxy on the device page.",
+          "sip_password": "Leave blank to keep the current password."
         }
       }
     },
     "error": {
-      "sip_incomplete": "Enter both the SIP username and password, or leave both blank."
+      "sip_incomplete": "Enter both the SIP username and password, or leave both blank to turn voice off."
     }
   },
   "exceptions": {
