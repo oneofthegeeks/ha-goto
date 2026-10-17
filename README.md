@@ -33,6 +33,18 @@ the same fields.
 If a v1 entry had no refresh token, Home Assistant shows a **Reauthenticate** prompt instead;
 follow it once.
 
+**Failed sends now raise.** v1 swallowed send errors (the automation carried on silently); v2
+raises them, so failures show up in traces and logs and later steps in the automation stop. If you
+want the old "keep going" behavior, set `continue_on_error: true` on the action:
+
+```yaml
+- action: goto_sms.send_sms
+  continue_on_error: true
+```
+
+**Rollback:** back up your Home Assistant config before upgrading. A version-2 config entry cannot
+load under v1.3.10; to downgrade you must delete the integration and add it again.
+
 ## Setup
 
 ### 1. Create a GoTo OAuth client
