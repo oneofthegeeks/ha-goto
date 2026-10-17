@@ -67,6 +67,15 @@ streaming. So a SIP media path is an accepted pattern in core.
 - **Breaking existing HACS users.** The `goto_sms` → `goto_connect` rename
   ships with a config-entry migration and release notes; no user re-auths
   from scratch without warning.
+- **Breaking Taylor's production install during development.** He runs
+  v1.3.10 daily in production. Until v2.0.0 is proven: all work happens on
+  the new library repo and on feature branches of `ha-goto`; **nothing gets
+  tagged/released** (HACS only updates on releases, so untagged work can't
+  reach his HA). `main` stays releasable at v1.3.x; any urgent v1.3.x fix can
+  still ship from main untouched by v2 work. v2.0.0 is validated against a
+  test HA instance (or a second config entry / manual install path) before
+  Taylor's production upgrades, and v1.3.10 remains available to roll back to
+  via HACS version pinning.
 - Blocking the HA event loop. Everything async.
 
 ## Constraints and known facts
