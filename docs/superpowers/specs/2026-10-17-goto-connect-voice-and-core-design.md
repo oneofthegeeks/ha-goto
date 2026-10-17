@@ -151,8 +151,14 @@ Taylor confirms an internal/partner endpoint exists.
   PR or dependency isn't practical, implement a minimal SIP UA in our lib
   (REGISTER, INVITE, digest 401/407, ACK/BYE, single-codec PCMU RTP sender).
   The SIPp scenario XMLs in goto_demo_scripts are the message-level spec.
-- **Domain rename** `goto_sms` → `goto_connect`, with automatic config-entry
-  migration, during the HACS phase (before core submission).
+- **Domain stays `goto_sms` through the HACS phase** (amended 2026-10-17,
+  Taylor's call, replacing the earlier rename-in-HACS plan): HA has no
+  supported cross-domain config-entry migration and a HACS repo ships one
+  integration directory, so v2.0.0 keeps the domain and migrates entries
+  in place via a config-entry VERSION bump — existing automations and the
+  config entry survive untouched, and no notify shim is needed for the
+  rename itself. The `goto_connect` domain happens exactly once, at core
+  submission, where users set up fresh.
 - **Notify surface & compatibility (my call):** HA core no longer accepts the
   legacy notify platform for new integrations — core requires entity-based
   notify (`notify.send_message` targeting a `NotifyEntity`, likely one entity
