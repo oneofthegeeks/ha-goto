@@ -20,6 +20,7 @@ from homeassistant.helpers.config_entry_oauth2_flow import (
     async_get_config_entry_implementation,
 )
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util.hass_dict import HassKey
 
 from .const import DOMAIN
 from .migration import async_migrate_entry  # noqa: F401  (HA looks it up here)
@@ -27,6 +28,7 @@ from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
+DATA_HASS_CONFIG: HassKey[ConfigType] = HassKey(f"{DOMAIN}_hass_config")
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
@@ -44,6 +46,7 @@ type GoToConfigEntry = ConfigEntry[GoToData]
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Register the action once, independent of entries."""
     async_setup_services(hass)
+    hass.data[DATA_HASS_CONFIG] = config  # legacy notify loading needs the real config
     return True
 
 
@@ -65,10 +68,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: GoToConfigEntry) -> bool
         try:
             await session.async_ensure_token_valid()
         except ClientResponseError as err:
-            if 400 <= err.status < 500:
+            if err.status in (400, 401, 403):  # 408/429/5xx are transient
                 raise GoToAuthError("Token refresh rejected") from err
             raise GoToError("Token refresh failed") from err
-        except ClientError as err:
+        except (ClientError, TimeoutError) as err:
             raise GoToError("Token refresh failed") from err
         return session.token["access_token"]
 
@@ -86,7 +89,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GoToConfigEntry) -> bool
 
     # Legacy notify.goto_sms: discovery name makes the service "goto_sms".
     await discovery.async_load_platform(
-        hass, "notify", DOMAIN, {CONF_NAME: DOMAIN}, {}
+        hass, "notify", DOMAIN, {CONF_NAME: DOMAIN}, hass.data[DATA_HASS_CONFIG]
     )
     return True
 
