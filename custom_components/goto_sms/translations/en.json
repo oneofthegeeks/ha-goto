@@ -26,6 +26,6 @@
     }
   },
   "application_credentials": {
-    "description": "Create an OAuth client in the GoTo Developer Portal with the redirect URI `https://my.home-assistant.io/redirect/oauth` and the `messaging.v1.send` scope, then enter its client ID and secret here."
+    "description": "Create an OAuth client in the GoTo Developer Portal with the redirect URI `{redirect_url}` and the `messaging.v1.send` scope, then enter its client ID and secret here."
   }
 }

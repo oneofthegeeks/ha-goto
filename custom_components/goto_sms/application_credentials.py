@@ -73,3 +73,8 @@ async def async_get_auth_implementation(
     return GoToBasicAuthImplementation(
         hass, auth_domain, credential, await async_get_authorization_server(hass)
     )
+
+
+async def async_get_description_placeholders(hass: HomeAssistant) -> dict[str, str]:
+    """Placeholders for the credentials dialog (hassfest forbids URLs in strings)."""
+    return {"redirect_url": "https://my.home-assistant.io/redirect/oauth"}

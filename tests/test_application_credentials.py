@@ -66,3 +66,13 @@ async def test_refresh_uses_basic_header(hass, aioclient_mock) -> None:
     data, headers = _body(aioclient_mock)
     assert headers["Authorization"] == BASIC
     assert data == {"grant_type": "refresh_token", "refresh_token": "old-rt"}
+
+
+async def test_description_placeholders(hass: HomeAssistant) -> None:
+    from custom_components.goto_sms.application_credentials import (
+        async_get_description_placeholders,
+    )
+
+    assert await async_get_description_placeholders(hass) == {
+        "redirect_url": "https://my.home-assistant.io/redirect/oauth"
+    }
