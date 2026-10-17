@@ -78,7 +78,12 @@ current rules at build time):
   own repo or clearly maintained source.
 - Integration fully async (`aiohttp` / asyncio — no `requests`).
 - OAuth through HA's **Application Credentials** framework, not a hand-rolled
-  flow.
+  flow. Confirmed workable (Taylor): the GoTo developer portal accepts any
+  redirect URI (so `https://my.home-assistant.io/redirect/oauth` is fine), and
+  any GoTo customer can self-serve a developer account and create an OAuth
+  app. User docs must walk through creating the OAuth client with that
+  redirect URI; existing users add the new redirect URI to their GoTo OAuth
+  app when they re-auth after upgrading.
 - Config flow, translations, quality-scale checklist, full test coverage of
   the config flow at minimum.
 - Logo/brand PR to `home-assistant/brands` (also required by HACS default).
@@ -99,6 +104,11 @@ current rules at build time):
   (URI headers); `From` header must use the SIP username, not the local IP;
   REGISTER before INVITE with separate Call-ID; digest auth on both.
 - Audio: PCMU/8000 — PCM 16-bit 8 kHz mono WAV source.
+- Transport (Taylor): GoTo supports both UDP and SIP-TLS on these devices.
+  The library's transport layer handles **both from the start**: UDP as the
+  simple default (matches the proven demo flow), TLS selectable in config.
+  Builder decides whether SRTP comes with TLS in v1 or follows later based on
+  what GoTo negotiates.
 
 **SIP credentials:** there is **no public GoTo API** that provisions a SIP
 device or returns SIP credentials (confirmed via GoTo dev docs + third-party
@@ -132,7 +142,15 @@ Taylor confirms an internal/partner endpoint exists.
   The SIPp scenario XMLs in goto_demo_scripts are the message-level spec.
 - **Domain rename** `goto_sms` → `goto_connect`, with automatic config-entry
   migration, during the HACS phase (before core submission).
-- **Services:** SMS stays on the notify platform. Voice is
+- **Notify surface & compatibility (my call):** HA core no longer accepts the
+  legacy notify platform for new integrations — core requires entity-based
+  notify (`notify.send_message` targeting a `NotifyEntity`, likely one entity
+  per GoTo owner number). So the v2.0.0 HACS release adopts the entity-based
+  surface as primary, and **keeps a deprecated `notify.goto_sms`-compatible
+  legacy shim** (same service name and `data.sender_id` behavior, logging a
+  deprecation warning) so existing automations keep working through the HACS
+  phase. The shim never goes to core and is removed in a later HACS major.
+- **Services:** SMS moves to entity-based notify as above. Voice is
   `goto_connect.call_tts(target, message, tts_engine?, voice?, repeat=2)`.
   Message supports HA templates. Call outcome surfaced via service response /
   events.
