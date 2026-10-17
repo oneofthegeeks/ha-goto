@@ -112,7 +112,9 @@ current rules at build time):
   too); separate **outbound proxy** (connection target) vs **SIP domain**
   (URI headers); `From` header must use the SIP username, not the local IP;
   REGISTER before INVITE with separate Call-ID; digest auth on both.
-- Audio: PCMU/8000 — PCM 16-bit 8 kHz mono WAV source.
+- Audio: **PCMA/8000** (a-law, RTP payload type 8) is what the demo's SDP
+  offers and GoTo accepts; source is PCM 16-bit 8 kHz mono WAV. The lib
+  offers PCMA primarily and PCMU as a secondary codec.
 - Transport (Taylor): GoTo supports both UDP and SIP-TLS on these devices.
   The library's transport layer handles **both from the start**: UDP as the
   simple default (matches the proven demo flow), TLS selectable in config.
