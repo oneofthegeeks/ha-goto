@@ -58,7 +58,9 @@ SEND_SMS_SCHEMA = vol.Schema(
         vol.Required(ATTR_TARGET): cv.string,
         vol.Required(ATTR_SENDER_ID): cv.string,
         vol.Optional(ATTR_TEMPLATE_DATA, default=dict): dict,
-    }
+    },
+    # v1 ignored unknown keys (e.g. a pasted notify `title:`); keep that.
+    extra=vol.ALLOW_EXTRA,
 )
 
 CALL_TTS_SCHEMA = vol.Schema(

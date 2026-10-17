@@ -70,6 +70,10 @@ async def test_missing_credentials_starts_reauth(hass: HomeAssistant, messaging,
     v2_entry.add_to_hass(hass)
     assert not await hass.config_entries.async_setup(v2_entry.entry_id)
     assert v2_entry.state is ConfigEntryState.SETUP_ERROR
+    assert any(
+        f["context"]["source"] == "reauth"
+        for f in hass.config_entries.flow.async_progress()
+    )
 
 
 # --- token refresh failure mapping (real provider, mocked token endpoint) ---

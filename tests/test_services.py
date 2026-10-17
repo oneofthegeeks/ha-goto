@@ -22,6 +22,11 @@ async def test_happy_path_returns_response(hass: HomeAssistant, setup_entry, mes
     )
 
 
+async def test_send_sms_tolerates_extra_keys(hass: HomeAssistant, setup_entry, messaging) -> None:
+    """v1 ignored unknown keys (e.g. a pasted notify `title:`)."""
+    assert await send(hass, title="ignored") == {"id": "msg-1"}
+
+
 async def test_template_with_data_vars(hass: HomeAssistant, setup_entry, messaging) -> None:
     await send(hass, message="Hello {{ name }} in {{ room }}", data={"name": "Jo", "room": "kitchen"})
     assert messaging.async_send_sms.await_args.args[2] == "Hello Jo in kitchen"
