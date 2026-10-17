@@ -8,13 +8,25 @@ on:
 
 jobs:
   pytest:
+    name: pytest (${{ matrix.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # floor: phcc 0.13.205 ships HA 2025.1.x (the declared minimum)
+          - name: floor
+            python: "3.12"
+            phcc: "pytest-homeassistant-custom-component==0.13.205"
+          - name: latest
+            python: "3.13"
+            phcc: "pytest-homeassistant-custom-component"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
-      - run: pip install -r requirements_test.txt
+          python-version: ${{ matrix.python }}
+      - run: pip install -r requirements_test.txt "${{ matrix.phcc }}"
       - run: python -m pytest
 
   hassfest:
