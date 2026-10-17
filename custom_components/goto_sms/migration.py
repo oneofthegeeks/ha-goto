@@ -62,9 +62,24 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "token_type": "Bearer",
         "scope": " ".join(OAUTH_SCOPES),
     }
+    # v1 entries had no unique_id; the config flow uses DOMAIN as the singleton
+    # id, so without this reauth aborts with unique_id_mismatch.
+    unique_id: str | None = DOMAIN
+    if any(
+        other.unique_id == DOMAIN
+        for other in hass.config_entries.async_entries(DOMAIN)
+        if other.entry_id != entry.entry_id
+    ):
+        _LOGGER.warning(
+            "Another goto_sms entry already uses unique_id %r; leaving %s without one",
+            DOMAIN,
+            entry.entry_id,
+        )
+        unique_id = None
     hass.config_entries.async_update_entry(
         entry,
         data={"auth_implementation": DOMAIN, "token": token},
+        unique_id=unique_id,
         version=2,
         minor_version=1,
     )

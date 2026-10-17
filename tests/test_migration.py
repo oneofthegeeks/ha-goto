@@ -152,3 +152,126 @@ async def test_migrated_v1_entry_without_tokens_reauths(hass: HomeAssistant) -> 
         f["context"]["source"] == "reauth"
         for f in hass.config_entries.flow.async_progress()
     )
+
+
+# --- C1: migrated entries get unique_id so reauth / duplicate guard work ---
+import logging
+
+from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import config_entry_oauth2_flow
+
+from custom_components.goto_sms.const import OAUTH2_TOKEN_URL
+
+REDIRECT = "https://example.com/auth/external/callback"
+
+
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(enable_custom_integrations):
+    yield
+
+
+async def _complete_reauth(hass, hass_client_no_auth, aioclient_mock) -> None:
+    flows = [
+        f for f in hass.config_entries.flow.async_progress()
+        if f["context"]["source"] == "reauth"
+    ]
+    assert flows
+    fid = flows[0]["flow_id"]
+    result = await hass.config_entries.flow.async_configure(fid, {})
+    assert result["type"] is FlowResultType.EXTERNAL_STEP
+    state = config_entry_oauth2_flow._encode_jwt(
+        hass, {"flow_id": fid, "redirect_uri": REDIRECT}
+    )
+    client = await hass_client_no_auth()
+    await client.get(f"/auth/external/callback?code=abcd&state={state}")
+    aioclient_mock.clear_requests()
+    aioclient_mock.post(
+        OAUTH2_TOKEN_URL,
+        json={
+            "access_token": "n",
+            "refresh_token": "n2",
+            "token_type": "Bearer",
+            "expires_in": 3600,
+        },
+    )
+    result = await hass.config_entries.flow.async_configure(fid)
+    assert result["reason"] == "reauth_successful"
+
+
+@pytest.mark.usefixtures("current_request_with_host")
+async def test_migrated_v1_reauth_completes(
+    hass: HomeAssistant, hass_client_no_auth, aioclient_mock
+) -> None:
+    entry = v1_entry(token_expires_at="2000-01-01T00:00:00")
+    entry.add_to_hass(hass)
+    aioclient_mock.post(OAUTH2_TOKEN_URL, status=400, json={"error": "invalid_grant"})
+    assert not await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.version == 2
+    assert entry.unique_id == DOMAIN
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+
+    await _complete_reauth(hass, hass_client_no_auth, aioclient_mock)
+    await hass.async_block_till_done()
+    assert entry.data["token"]["refresh_token"] == "n2"
+    assert len(hass.config_entries.async_entries(DOMAIN)) == 1
+
+
+@pytest.mark.usefixtures("current_request_with_host")
+async def test_migrated_v1_without_tokens_reauth_completes(
+    hass: HomeAssistant, hass_client_no_auth, aioclient_mock
+) -> None:
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=1,
+        data={"client_id": "cid", "client_secret": "cs"},
+    )
+    entry.add_to_hass(hass)
+    assert not await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert entry.unique_id == DOMAIN
+    assert entry.state is ConfigEntryState.SETUP_ERROR
+
+    await _complete_reauth(hass, hass_client_no_auth, aioclient_mock)
+    await hass.async_block_till_done()
+    assert entry.data["token"]["refresh_token"] == "n2"
+    assert len(hass.config_entries.async_entries(DOMAIN)) == 1
+
+
+async def test_second_v1_entry_keeps_no_unique_id(
+    hass: HomeAssistant, caplog: pytest.LogCaptureFixture
+) -> None:
+    first, second = v1_entry(), v1_entry()
+    assert await migrate(hass, first)
+    with caplog.at_level(logging.WARNING):
+        assert await migrate(hass, second)
+    assert first.unique_id == DOMAIN
+    assert second.unique_id is None
+    assert second.version == 2
+    assert "already uses unique_id" in caplog.text
+
+
+@pytest.mark.usefixtures("current_request_with_host")
+async def test_duplicate_add_aborts_for_migrated_entry(
+    hass: HomeAssistant, hass_client_no_auth, aioclient_mock
+) -> None:
+    entry = v1_entry(token_expires_at="2000-01-01T00:00:00")
+    assert await migrate(hass, entry)
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+    assert result["type"] is FlowResultType.EXTERNAL_STEP
+    fid = result["flow_id"]
+    state = config_entry_oauth2_flow._encode_jwt(
+        hass, {"flow_id": fid, "redirect_uri": REDIRECT}
+    )
+    client = await hass_client_no_auth()
+    await client.get(f"/auth/external/callback?code=abcd&state={state}")
+    aioclient_mock.post(
+        OAUTH2_TOKEN_URL,
+        json={"access_token": "n", "refresh_token": "n2",
+              "token_type": "Bearer", "expires_in": 3600},
+    )
+    result = await hass.config_entries.flow.async_configure(fid)
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "already_configured"
