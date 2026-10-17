@@ -141,3 +141,7 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     _LOGGER.info("GoTo SMS integration setup complete")
     return True
+
+
+# v1 -> v2 entry migration lives in migration.py (Task 5 rewrites this file).
+from .migration import async_migrate_entry  # noqa: E402,F401
