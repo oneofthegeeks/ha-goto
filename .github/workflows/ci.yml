@@ -15,8 +15,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: pip install -r requirements_test.txt
-      # exit 5 = no tests collected; fine until Task 2+ add tests
-      - run: python -m pytest || [ $? -eq 5 ]
+      - run: python -m pytest
 
   hassfest:
     runs-on: ubuntu-latest

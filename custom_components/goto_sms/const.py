@@ -7,6 +7,7 @@ DEFAULT_NAME = "GoTo SMS"
 OAUTH2_AUTHORIZE_URL = "https://authentication.logmeininc.com/oauth/authorize"
 OAUTH2_TOKEN_URL = "https://authentication.logmeininc.com/oauth/token"
 OAUTH2_SCOPE = "messaging.v1.send"
+OAUTH_SCOPES = [OAUTH2_SCOPE]
 
 # GoTo Connect API Endpoints
 GOTO_API_BASE_URL = "https://api.goto.com"
