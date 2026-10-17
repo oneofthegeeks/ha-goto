@@ -1,0 +1,6 @@
+{
+  "services": {
+    "send_sms": { "service": "mdi:message-text" },
+    "call_tts": { "service": "mdi:phone-in-talk" }
+  }
+}

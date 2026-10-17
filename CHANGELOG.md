@@ -5,6 +5,18 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - Unreleased
+
+### Changed
+- Async rewrite on the `gotoconnect` library (PyPI); OAuth now uses Home Assistant Application Credentials (redirect `https://my.home-assistant.io/redirect/oauth`). v1 installs migrate in place with no re-auth; `goto_sms.send_sms` and `notify.goto_sms` are unchanged. Minimum Home Assistant 2025.1.0.
+
+### Added
+- `goto_sms.call_tts` (admin-only): phone call that speaks Home Assistant TTS over SIP, returning `answered`/`duration`/`reason`/`bye_confirmed`. Optional SIP settings in the integration options.
+- Service icons, brand icons, v2 README.
+
+### Removed
+- `install.sh`/`update.sh`-era docs (QUICKSTART.md, INSTALL.md) and the obsolete `configuration.yaml.example` (the integration is config-entry only).
+
 ## [1.3.10] - 2025-11-19
 
 ### Fixed
