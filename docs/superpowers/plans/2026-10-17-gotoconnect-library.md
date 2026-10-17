@@ -16,6 +16,7 @@
 - SIP facts (proven against GoTo prod, do not "improve"): expect **407 Proxy Authentication Required** (handle 401 too); `From` header user = SIP username, never local IP; REGISTER before INVITE with a distinct Call-ID; digest on both REGISTER and INVITE; SDP offers `m=audio <port> RTP/AVP 8 101`, `a=rtpmap:8 PCMA/8000`, `a=rtpmap:101 telephone-event/8000`; default ring timeout 25 s.
 - SMS facts: `POST https://api.goto.com/messaging/v1/messages`, JSON `{"ownerPhoneNumber", "contactPhoneNumbers", "body"}`; owner must differ from contact.
 - Defaults: SIP server `sip.goto.com`, UDP port 5060, TLS port 5061, outbound proxy optional (when set, it is the connection target; the server stays in URIs).
+- Also mirrored from the proven scenarios (added after the final review caught their omission): Record-Route sets from the 200 OK are applied as Route headers on ACK and BYE; UDP requests are retransmitted (0.5 s doubling) until the first response; a retransmitted 200 re-triggers the ACK; cancelling a ringing call sends CANCEL and an answer racing that CANCEL is ACKed + BYEd (never left connected).
 - Secrets never logged: no passwords, tokens, or digest responses at any log level.
 - License MIT, repo private initially, Conventional Commits.
 - This library repo may be tagged/released freely — it cannot affect the production `ha-goto` v1.3.10 install (that constraint binds the integration repo only).
