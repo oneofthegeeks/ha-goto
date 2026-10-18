@@ -1,6 +1,6 @@
 # ha-goto
 
-Live: v2.0.2 (2026-10-18) - G.722 wideband call_tts audio via aiogotoconnect 0.3.0 (SDP-negotiated, G.711 fallback; lib live-smoked on a real call). v2 base (app-credentials OAuth, SMS) validated live on Taylor's HA (2026.10.2).
+Live: v2.0.3 (2026-10-18) - G.722 wideband call_tts audio via aiogotoconnect 0.3.1 (SDP-negotiated, G.711 fallback; pre-encode during ring + tail silence — both live-verified by ear). v2 base (app-credentials OAuth, SMS) validated live on Taylor's HA (2026.10.2).
 
 ## What This Is
 Home Assistant custom integration (domain `goto_sms`) that sends SMS via GoTo Connect and, optionally, places TTS phone calls over SIP. Used by Taylor in production (see Live line) and published via HACS.
@@ -8,7 +8,7 @@ Home Assistant custom integration (domain `goto_sms`) that sends SMS via GoTo Co
 ## Stack
 - Python, Home Assistant custom integration (min HA 2025.1.0, see `hacs.json`); config-entry only.
 - Auth: HA Application Credentials + OAuth2 (`GoToBasicAuthImplementation`), scope `messaging.v1.send`.
-- SMS and voice via the `aiogotoconnect==0.3.0` PyPI lib (async; `GoToMessaging`, `GoToVoice`); 0.3.0 negotiates G.722 wideband for `call_tts` audio when GoTo accepts it (it does — live-smoked 2026-10-18), else G.711.
+- SMS and voice via the `aiogotoconnect==0.3.1` PyPI lib (async; `GoToMessaging`, `GoToVoice`); negotiates G.722 wideband for `call_tts` audio when GoTo accepts it (it does — live-smoked 2026-10-18), else G.711.
 - Tests: pytest + pytest-homeassistant-custom-component.
 
 ## Local Development
