@@ -1,6 +1,6 @@
 # ha-goto
 
-Live: v1.3.10 (2025-11-19) - v1 HACS release (SMS only). Pre-release v2.0.0-beta.1 (2026-10-17) published for Taylor's live validation; v2.0.0 tags after it passes.
+Live: v2.0.0 (2026-10-18) - v2 rewrite on the gotoconnect lib: app-credentials OAuth (zero re-auth migration), SMS + admin-only call_tts voice. Validated live on Taylor's HA (2026.10.2).
 
 ## What This Is
 Home Assistant custom integration (domain `goto_sms`) that sends SMS via GoTo Connect and, optionally, places TTS phone calls over SIP. Used by Taylor in production (v1.3.10) and published via HACS.
