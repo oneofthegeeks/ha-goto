@@ -1,291 +1,66 @@
-"""Config flow for GoTo SMS integration."""
+"""Config flow for GoTo SMS (application-credentials OAuth2)."""
+
+from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from collections.abc import Mapping
+from typing import Any
 
-import voluptuous as vol
-from homeassistant import config_entries
-from homeassistant.data_entry_flow import FlowResult
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntry, ConfigFlowResult
+from homeassistant.core import callback
+from homeassistant.helpers import config_entry_oauth2_flow
 
-from .const import (
-    CONF_CLIENT_ID,
-    CONF_CLIENT_SECRET,
-    DOMAIN,
-    OAUTH2_AUTHORIZE_URL,
-    OAUTH2_SCOPE,
-    OAUTH2_TOKEN_URL,
-)
-from .oauth import GoToOAuth2Manager
-
-_LOGGER = logging.getLogger(__name__)
+from .const import DOMAIN
+from .options_flow import GoToOptionsFlow
 
 
-class GoToSMSConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for GoTo SMS."""
+class GoToOAuthFlowHandler(
+    config_entry_oauth2_flow.AbstractOAuth2FlowHandler, domain=DOMAIN
+):
+    """Handle the OAuth2 config flow.
 
-    VERSION = 1
+    The scope is added by GoToBasicAuthImplementation.extra_authorize_data;
+    do NOT repeat it here or the authorize URL gets two scope params.
+    """
 
-    def __init__(self) -> None:
-        """Initialize the config flow."""
-        _LOGGER.info("Initializing GoTo SMS config flow")
-        self.oauth_manager: Optional[GoToOAuth2Manager] = None
-        self.client_id: Optional[str] = None
-        self.client_secret: Optional[str] = None
+    DOMAIN = DOMAIN
+    # Task 4 (migration) depends on these exact numbers.
+    VERSION = 2
+    MINOR_VERSION = 1
 
-    async def async_step_user(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> FlowResult:
-        """Handle the initial step."""
-        _LOGGER.info(
-            "GoTo SMS config flow user step called, user_input: %s",
-            user_input is not None,
-        )
-        errors = {}
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> GoToOptionsFlow:
+        """Options hold the optional SIP (voice) settings."""
+        return GoToOptionsFlow()
 
-        if user_input is not None:
-            self.client_id = user_input[CONF_CLIENT_ID]
-            self.client_secret = user_input[CONF_CLIENT_SECRET]
-
-            # Validate credentials by attempting to create OAuth manager
-            try:
-                _LOGGER.info(
-                    "Creating OAuth manager with client_id: %s", self.client_id
-                )
-                # For config flow, we need to create a temporary OAuth manager
-                # that doesn't require a config entry yet
-                self.oauth_manager = GoToOAuth2Manager(
-                    self.hass, None  # No config entry during setup
-                )
-                # Set the credentials manually for the setup process
-                self.oauth_manager.client_id = self.client_id
-                self.oauth_manager.client_secret = self.client_secret
-                _LOGGER.info("OAuth manager created successfully")
-                return await self.async_step_oauth()
-            except Exception as e:
-                _LOGGER.error("Failed to initialize OAuth manager: %s", e)
-                errors["base"] = "invalid_credentials"
-
-        return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_CLIENT_ID): str,
-                    vol.Required(CONF_CLIENT_SECRET): str,
-                }
-            ),
-            errors=errors,
-        )
-
-    async def async_step_oauth(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> FlowResult:
-        """Handle the OAuth2 authorization step."""
-        _LOGGER.info("Entering OAuth step, user_input: %s", user_input is not None)
-        if user_input is not None:
-            # Handle the OAuth2 callback
-            try:
-                authorization_response = user_input.get("authorization_response")
-                if not authorization_response:
-                    raise HomeAssistantError("No authorization response received")
-
-                success = await self.oauth_manager.fetch_token(authorization_response)
-
-                if success:
-                    # Dismiss the notification
-                    await self.hass.services.async_call(
-                        "persistent_notification",
-                        "dismiss",
-                        {"notification_id": "goto_sms_auth_url"},
-                    )
-
-                    # Create the config entry with tokens
-                    config_data = {
-                        CONF_CLIENT_ID: self.client_id,
-                        CONF_CLIENT_SECRET: self.client_secret,
-                        "tokens": self.oauth_manager._tokens,  # Include the tokens
-                    }
-
-                    return self.async_create_entry(
-                        title="GoTo SMS",
-                        data=config_data,
-                    )
-                else:
-                    return self.async_show_form(
-                        step_id="oauth",
-                        errors={"base": "oauth_failed"},
-                    )
-
-            except Exception as e:
-                _LOGGER.error("OAuth2 flow failed: %s", e)
-                return self.async_show_form(
-                    step_id="oauth",
-                    errors={"base": "oauth_failed"},
-                )
-
-        # Get the authorization URL
-        try:
-            _LOGGER.info("About to generate authorization URL")
-            auth_url = self.oauth_manager.get_authorization_url()
-            _LOGGER.info("Generated authorization URL: %s", auth_url)
-        except Exception as e:
-            _LOGGER.error("Failed to generate authorization URL: %s", e)
-            # Create a fallback URL manually
-            auth_url = (
-                f"https://authentication.logmeininc.com/oauth/authorize"
-                f"?client_id={self.client_id}"
-                f"&redirect_uri=https://home-assistant.io/auth/callback"
-                f"&response_type=code&scope={OAUTH2_SCOPE}"
-            )
-            _LOGGER.info("Using fallback authorization URL: %s", auth_url)
-
-        _LOGGER.info("Showing OAuth form with auth_url: %s", auth_url)
-
-        # Create a persistent notification with the URL so users can see it
-        await self.hass.services.async_call(
-            "persistent_notification",
-            "create",
-            {
-                "message": f"Please visit this URL to authorize GoTo SMS:\n\n{auth_url}\n\nAfter authorization, copy the redirect URL and paste it in the configuration form.",
-                "title": "GoTo SMS Authorization",
-                "notification_id": "goto_sms_auth_url",
-            },
-        )
-
-        return self.async_show_form(
-            step_id="oauth",
-            description_placeholders={
-                "auth_url": auth_url,
-            },
-            data_schema=vol.Schema(
-                {
-                    vol.Required("authorization_response"): str,
-                }
-            ),
-        )
+    @property
+    def logger(self) -> logging.Logger:
+        """Return the flow logger."""
+        return logging.getLogger(__name__)
 
     async def async_step_reauth(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> FlowResult:
-        """Handle re-authentication."""
-        _LOGGER.info("Starting re-authentication flow")
+        self, entry_data: Mapping[str, Any]
+    ) -> ConfigFlowResult:
+        """Start reauth when the refresh token is rejected."""
+        return await self.async_step_reauth_confirm()
 
-        # Get the existing config entry
-        config_entry = self.hass.config_entries.async_get_entry(
-            self.context["entry_id"]
-        )
-        if not config_entry:
-            _LOGGER.error("No config entry found for re-authentication")
-            return self.async_abort(reason="unknown")
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask the user to re-authorize, then run the OAuth flow."""
+        if user_input is None:
+            return self.async_show_form(step_id="reauth_confirm")
+        return await self.async_step_user()
 
-        # Store the existing credentials
-        self.client_id = config_entry.data[CONF_CLIENT_ID]
-        self.client_secret = config_entry.data[CONF_CLIENT_SECRET]
-
-        # Create OAuth manager with existing credentials
-        self.oauth_manager = GoToOAuth2Manager(self.hass, config_entry)
-        self.oauth_manager.client_id = self.client_id
-        self.oauth_manager.client_secret = self.client_secret
-
-        return await self.async_step_reauth_oauth()
-
-    async def async_step_reauth_oauth(
-        self, user_input: Optional[Dict[str, Any]] = None
-    ) -> FlowResult:
-        """Handle the re-authentication OAuth step."""
-        _LOGGER.info("Entering re-authentication OAuth step")
-
-        if user_input is not None:
-            # Handle the OAuth2 callback
-            try:
-                authorization_response = user_input.get("authorization_response")
-                if not authorization_response:
-                    raise HomeAssistantError("No authorization response received")
-
-                success = await self.oauth_manager.fetch_token(authorization_response)
-
-                if success:
-                    # Dismiss the notification
-                    await self.hass.services.async_call(
-                        "persistent_notification",
-                        "dismiss",
-                        {"notification_id": "goto_sms_reauth_url"},
-                    )
-
-                    # Update the existing config entry with new tokens
-                    config_entry = self.hass.config_entries.async_get_entry(
-                        self.context["entry_id"]
-                    )
-                    if config_entry:
-                        # Update the config entry with new tokens
-                        new_data = dict(config_entry.data)
-                        new_data["tokens"] = self.oauth_manager._tokens
-
-                        self.hass.config_entries.async_update_entry(
-                            config_entry, data=new_data
-                        )
-
-                        _LOGGER.info("Re-authentication successful")
-                        return self.async_abort(reason="reauth_successful")
-                    else:
-                        _LOGGER.error("Config entry not found during re-authentication")
-                        return self.async_abort(reason="unknown")
-                else:
-                    return self.async_show_form(
-                        step_id="reauth_oauth",
-                        errors={"base": "oauth_failed"},
-                    )
-
-            except Exception as e:
-                _LOGGER.error("Re-authentication OAuth2 flow failed: %s", e)
-                return self.async_show_form(
-                    step_id="reauth_oauth",
-                    errors={"base": "oauth_failed"},
-                )
-
-        # Get the authorization URL for re-authentication
-        try:
-            _LOGGER.info("Generating re-authentication authorization URL")
-            auth_url = self.oauth_manager.get_authorization_url()
-            _LOGGER.info("Generated re-authentication authorization URL: %s", auth_url)
-        except Exception as e:
-            _LOGGER.error(
-                "Failed to generate re-authentication authorization URL: %s", e
+    async def async_oauth_create_entry(self, data: dict[str, Any]) -> ConfigFlowResult:
+        """Create the (single) entry, or refresh tokens on reauth."""
+        # GoTo has no whoami in our scope, so the domain is the singleton id.
+        await self.async_set_unique_id(DOMAIN)
+        if self.source == SOURCE_REAUTH:
+            self._abort_if_unique_id_mismatch()
+            return self.async_update_reload_and_abort(
+                self._get_reauth_entry(), data_updates=data
             )
-            # Create a fallback URL manually
-            auth_url = (
-                f"https://authentication.logmeininc.com/oauth/authorize"
-                f"?client_id={self.client_id}"
-                f"&redirect_uri=https://home-assistant.io/auth/callback"
-                f"&response_type=code&scope={OAUTH2_SCOPE}"
-            )
-            _LOGGER.info(
-                "Using fallback re-authentication authorization URL: %s", auth_url
-            )
-
-        # Create a persistent notification with the URL so users can see it
-        await self.hass.services.async_call(
-            "persistent_notification",
-            "create",
-            {
-                "message": f"Please visit this URL to re-authorize GoTo SMS:\n\n{auth_url}\n\nAfter authorization, copy the redirect URL and paste it in the configuration form.",
-                "title": "GoTo SMS Re-authorization",
-                "notification_id": "goto_sms_reauth_url",
-            },
-        )
-
-        return self.async_show_form(
-            step_id="reauth_oauth",
-            description_placeholders={
-                "auth_url": auth_url,
-            },
-            data_schema=vol.Schema(
-                {
-                    vol.Required("authorization_response"): str,
-                }
-            ),
-        )
-
-    async def async_step_import(self, import_info: Dict[str, Any]) -> FlowResult:
-        """Handle import from configuration.yaml."""
-        return await self.async_step_user(import_info)
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(title="GoTo Connect", data=data)

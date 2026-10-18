@@ -1,487 +1,213 @@
-# GoTo SMS Integration for Home Assistant
+# GoTo SMS for Home Assistant
 
-[![Test Integration](https://github.com/oneofthegeeks/ha-goto/actions)](https://github.com/oneofthegeeks/ha-goto/actions)
+[![CI](https://github.com/oneofthegeeks/ha-goto/actions/workflows/ci.yml/badge.svg)](https://github.com/oneofthegeeks/ha-goto/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://hacs.xyz/docs/setup/prerequisites)
 
-A custom Home Assistant integration that allows you to send SMS messages using the GoTo Connect API.
+Send SMS from Home Assistant through your GoTo Connect account, and (optionally) place phone
+calls that read a message aloud with Home Assistant text-to-speech.
 
-## Features
+- `goto_sms.send_sms` - SMS with Home Assistant templates
+- `notify.goto_sms` - legacy notify service, still supported
+- `goto_sms.call_tts` - phone call that speaks a TTS message (optional, needs SIP details)
 
-- **OAuth2 Authentication**: Secure authentication using GoTo Connect's OAuth2 flow
-- **Automatic Token Refresh**: Automatically refreshes expired access tokens
-- **SMS Notifications**: Send SMS messages via the `goto_sms.send_sms` service
-- **Template Support**: Dynamic messages using Home Assistant templates
-- **Error Handling**: Comprehensive error logging and handling
-- **Async Compatible**: Built with async/await patterns for better performance
+Requires Home Assistant 2025.1.0 or newer.
 
 ## Installation
 
-### Method 1: HACS (Recommended)
+HACS custom repository (the integration is not yet in the HACS default store):
 
-1. Make sure you have [HACS](https://hacs.xyz/) installed
-2. Add this repository as a custom repository in HACS
-3. Search for "GoTo SMS" in the HACS store
-4. Click "Download" and restart Home Assistant
+1. In HACS, open the menu > **Custom repositories**.
+2. Add `https://github.com/oneofthegeeks/ha-goto` with category **Integration**.
+3. Download **GoTo SMS** and restart Home Assistant.
 
-### Method 2: Manual Installation
+Manual: copy `custom_components/goto_sms` into your `config/custom_components/` directory and restart.
 
-1. Download this repository
-2. Copy the `custom_components/goto_sms` folder to your Home Assistant `config/custom_components/` directory
-3. Restart Home Assistant
-4. The integration will be available in the Integrations page
+## Upgrading from v1
 
-### Method 3: Automated Installation
+Existing installs upgrade in place - your automations keep working. On first start the integration
+moves your saved OAuth client ID/secret into Home Assistant's Application Credentials and keeps
+your tokens, so you do not have to sign in again. `goto_sms.send_sms` and `notify.goto_sms` keep
+the same fields.
 
-Run the installation script from the repository root:
+If a v1 entry had no refresh token, Home Assistant shows a **Reauthenticate** prompt instead;
+follow it once.
 
-```bash
-./install.sh
-```
-
-The script will auto-detect your Home Assistant installation and guide you through the process.
-
-## Updating
-
-### HACS Users (Recommended)
-
-If you installed via HACS, updates are automatic:
-
-1. **Automatic Updates**: HACS will notify you when updates are available
-2. **Manual Update**: Go to HACS → Integrations → GoTo SMS → Update
-3. **Restart**: After updating, restart Home Assistant
-
-### Manual Installation Updates
-
-#### Option 1: Using the Install Script (Recommended)
-
-```bash
-# Navigate to the repository directory
-cd /path/to/ha-goto
-
-# Pull latest changes
-git pull origin main
-
-# Run the install script (it handles backups automatically)
-./install.sh
-```
-
-#### Option 2: Manual Update
-
-1. **Backup your current installation:**
-   ```bash
-   cp -r /config/custom_components/goto_sms /config/custom_components/goto_sms.backup
-   ```
-
-2. **Download the latest version:**
-   - Download from GitHub releases, or
-   - Clone the repository: `git clone https://github.com/oneofthegeeks/ha-goto.git`
-
-3. **Replace the integration:**
-   ```bash
-   cp -r custom_components/goto_sms /config/custom_components/
-   ```
-
-4. **Restart Home Assistant**
-
-#### Option 3: Using the Dedicated Update Script (Recommended)
-
-The repository includes a dedicated update script:
-
-```bash
-# Run the update script
-./update.sh
-```
-
-The script will:
-- Automatically detect your Home Assistant installation
-- Create a backup of your current installation
-- Pull the latest changes from the repository
-- Install the updated integration
-- Provide clear next steps
-
-#### Option 4: Create Your Own Update Script
-
-Create a reusable update script for easier future updates:
-
-```bash
-#!/bin/bash
-# update_goto_sms.sh
-set -e
-
-echo "🔄 Updating GoTo SMS Integration..."
-
-# Navigate to installation directory
-cd /path/to/ha-goto
-
-# Backup current version
-echo "📦 Creating backup..."
-cp -r /config/custom_components/goto_sms /config/custom_components/goto_sms.backup.$(date +%Y%m%d_%H%M%S)
-
-# Pull latest changes
-echo "⬇️  Downloading latest version..."
-git pull origin main
-
-# Run install script
-echo "🔧 Installing update..."
-./install.sh
-
-echo "✅ Update complete! Please restart Home Assistant."
-```
-
-Make it executable: `chmod +x update_goto_sms.sh`
-
-### Post-Update Steps
-
-After updating:
-
-1. Restart Home Assistant to load the new version
-2. Check the CHANGELOG for any breaking changes
-3. Test the integration with a simple SMS
-4. Review your automations if there were major changes
-
-### Troubleshooting Updates
-
-#### Integration Not Working After Update
-
-1. **Check logs for errors:**
-   ```yaml
-   logger:
-     default: info
-     logs:
-       custom_components.goto_sms: debug
-   ```
-
-2. **Restore from backup if needed:**
-   ```bash
-   rm -rf /config/custom_components/goto_sms
-   cp -r /config/custom_components/goto_sms.backup /config/custom_components/goto_sms
-   ```
-
-3. **Re-authenticate if OAuth tokens are invalid**
-
-#### Version Compatibility
-
-- Check the `manifest.json` for minimum Home Assistant version requirements
-- Review the CHANGELOG for breaking changes
-- Test thoroughly after major version updates
-
-## Configuration
-
-### Prerequisites
-
-1. **GoTo Connect Account**: You need a GoTo Connect account with SMS capabilities
-2. **OAuth2 Application**: Create an OAuth2 application in your GoTo Connect developer portal
-3. **API Credentials**: Obtain your Client ID and Client Secret from GoTo Connect
-
-### Setup Steps
-
-1. **Create OAuth2 Application:**
-   - Log into your GoTo Connect developer portal
-   - Create a new OAuth2 application
-   - Set the redirect URI to `http://localhost:8123/auth/external/callback`
-     - If you access Home Assistant via a different URL, use that base URL instead (e.g., `http://homeassistant.local:8123/auth/external/callback`)
-   - Note your Client ID and Client Secret
-
-2. **Configure Integration:**
-   - In Home Assistant, go to Settings → Devices & Services
-   - Click Add Integration
-   - Search for "GoTo SMS" and select it
-   - Enter your Client ID and Client Secret in the configuration form
-   - Complete the OAuth2 authorization flow by visiting the provided URL
-   - Paste the authorization response back into the form
-
-3. **Test the Integration:**
-   - Use the Developer Tools → Services
-   - Call the `goto_sms.send_sms` service with:
-     ```yaml
-     message: "Hello from Home Assistant!"
-     target: "+1234567890"
-     sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
-     ```
-
-## Usage
-
-### Service Call
-
-Send an SMS using the service:
+**Failed sends now raise.** v1 swallowed send errors (the automation carried on silently); v2
+raises them, so failures show up in traces and logs and later steps in the automation stop. If you
+want the old "keep going" behavior, set `continue_on_error: true` on the action:
 
 ```yaml
-service: goto_sms.send_sms
-data:
-  message: "Your garage door is open!"
-  target: "+1234567890"
-  sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
+- action: goto_sms.send_sms
+  continue_on_error: true
 ```
 
-### Template Support
+**Rollback:** back up your Home Assistant config before upgrading. A version-2 config entry cannot
+load under v1.3.10; to downgrade you must delete the integration and add it again.
 
-The integration supports Home Assistant templates for dynamic messages:
+## Setup
 
-#### Basic Template Example
+### 1. Create a GoTo OAuth client
+
+In the [GoTo Developer Portal](https://developer.goto.com/) create an OAuth client with:
+
+- **Redirect URI:** `https://my.home-assistant.io/redirect/oauth`
+- **Scope:** `messaging.v1.send`
+
+Note the client ID and client secret.
+
+Tip: GoTo allows multiple redirect URIs - registering both of these covers every Home
+Assistant configuration, now and later:
+
+- `https://my.home-assistant.io/redirect/oauth` - used whenever the `my` integration is
+  loaded (it is part of `default_config`). It is a static relay page that bounces your
+  browser straight back to your own instance; no tokens pass through it.
+- `<your HA base URL>/auth/external/callback` (e.g. `https://ha.example.com/auth/external/callback`) -
+  used instead when the `my` integration is disabled; fully self-contained.
+
+### 2. Add the integration
+
+1. **Settings > Devices & Services > Add Integration > GoTo SMS**.
+2. Home Assistant asks for the application credentials: enter the client ID and secret.
+3. Sign in to GoTo and approve access.
+
+## Sending SMS
 
 ```yaml
-service: goto_sms.send_sms
+action: goto_sms.send_sms
 data:
-  message: "Temperature is {{ states('sensor.living_room_temperature') }}°F"
-  target: "+1234567890"
-  sender_id: "+1234567890"
+  message: "Garage door is open ({{ states('sensor.garage_temp') }}°F)"
+  target: "+15551234567"
+  sender_id: "+15557654321"   # a GoTo number on your account, E.164
 ```
 
-#### Advanced Template with Data
+| Field | Required | Description |
+|-------|----------|-------------|
+| `message` | yes | Text; Home Assistant templates are rendered |
+| `target` | yes | Recipient number with country code |
+| `sender_id` | yes | Your GoTo number to send from; must differ from `target` |
+| `data` | no | Extra template variables, available by name (see below) |
+
+Keys in `data` become template variables:
 
 ```yaml
-service: goto_sms.send_sms
+action: goto_sms.send_sms
 data:
-  message: "Alert: {{ data.location }} sensor triggered at {{ now().strftime('%H:%M') }}"
-  target: "+1234567890"
-  sender_id: "+1234567890"
+  message: "{{ event }} detected in {{ zone }}"
+  target: "+15551234567"
+  sender_id: "+15557654321"
   data:
-    location: "kitchen"
+    event: "Door opening"
+    zone: "front entrance"
 ```
 
-#### Template with Entity States
+If a template fails to render, the raw text is sent and an error is logged. The action can
+return GoTo's response (`response_variable:`).
+
+### Legacy notify
 
 ```yaml
-service: goto_sms.send_sms
+action: notify.goto_sms
 data:
-  message: |
-    Home Status Update:
-    - Temperature: {{ states('sensor.living_room_temperature') }}°F
-    - Humidity: {{ states('sensor.living_room_humidity') }}%
-    - Motion: {{ states('binary_sensor.motion_sensor') }}
-    - Door: {{ states('binary_sensor.front_door') }}
-  target: "+1234567890"
-  sender_id: "+1234567890"
+  message: "Hello"
+  target: ["+15551234567"]
+  data:
+    sender_id: "+15557654321"
 ```
 
-### Automation Examples
+The sender goes in `data.sender_id`; other `data` keys are template variables. New automations
+should prefer `goto_sms.send_sms`.
 
-#### Send SMS when motion detected with template:
+## Voice calls (optional)
+
+`goto_sms.call_tts` renders your message with a Home Assistant text-to-speech engine and calls the
+number over SIP using the [`gotoconnect`](https://pypi.org/project/gotoconnect/) library. GoTo has no
+REST call API, so this needs a SIP device on your account. SMS-only users can skip this section.
+
+### SIP setup
+
+1. In **GoTo Admin > Devices > Add Device > SIP Device**, create a device and note its username,
+   password, server and outbound proxy.
+2. In Home Assistant: **Settings > Devices & Services > GoTo SMS > Configure**.
+
+| Option | Notes |
+|--------|-------|
+| SIP username / password | From the device page; enter both or neither. The password is never shown again: leave the field blank to keep the current one |
+| SIP server | Defaults to `reg.jiveip.net` |
+| Outbound proxy | Account specific, like `youraccount.jive.rtcfront.net` (on the device page). Required in practice - calls fail without it |
+
+Clear the username and password to turn voice off. A text-to-speech integration (Home Assistant
+Cloud, Piper, Google Translate, ...) must be set up in Home Assistant.
+
+### Using it
 
 ```yaml
-automation:
-  - alias: "Send SMS when motion detected"
-    trigger:
-      platform: state
-      entity_id: binary_sensor.motion_sensor
-      to: "on"
-    action:
-      - service: goto_sms.send_sms
-        data:
-          message: "Motion detected at {{ now().strftime('%H:%M on %Y-%m-%d') }}"
-          target: "+1234567890"
-          sender_id: "+1234567890"
+action: goto_sms.call_tts
+data:
+  target: "+15551234567"
+  message: "The front door has been open for {{ states('sensor.door_open_minutes') }} minutes"
+  tts_engine: tts.home_assistant_cloud   # optional; default engine if omitted
+  language: en-US                        # optional
+  repeat: 2                              # optional, 1-3, default 1
+  ring_timeout: 30                       # optional, 5-60 seconds, default 25
+response_variable: call
 ```
 
-#### Send SMS with sensor data:
+The response has `answered` (bool), `duration` (seconds), `reason` (why the call ended) and
+`bye_confirmed` (the far end acknowledged the hang-up). For example, fall back to SMS:
 
 ```yaml
-automation:
-  - alias: "Temperature alert with template"
-    trigger:
-      platform: numeric_state
-      entity_id: sensor.living_room_temperature
-      above: 80
-    action:
-      - service: goto_sms.send_sms
-        data:
-          message: |
-            Temperature Alert!
-            Current: {{ states('sensor.living_room_temperature') }}°F
-            Humidity: {{ states('sensor.living_room_humidity') }}%
-            Time: {{ now().strftime('%H:%M') }}
-          target: "+1234567890"
-          sender_id: "+1234567890"
+- if: "{{ not call.answered }}"
+  then:
+    - action: goto_sms.send_sms
+      data:
+        message: "Door alert: nobody picked up"
+        target: "+15551234567"
+        sender_id: "+15557654321"
 ```
 
-#### Send SMS with custom data:
+Notes:
 
-```yaml
-automation:
-  - alias: "Custom alert with template data"
-    trigger:
-      platform: state
-      entity_id: binary_sensor.front_door
-      to: "on"
-    action:
-      - service: goto_sms.send_sms
-        data:
-          message: "{{ data.event_type }} detected in {{ data.zone }}"
-          target: "+1234567890"
-          sender_id: "+1234567890"
-          data:
-            event_type: "Door opening"
-            zone: "front entrance"
-```
-
-### Script Example
-
-```yaml
-script:
-  send_test_sms:
-    alias: "Send Test SMS"
-    sequence:
-      - service: goto_sms.send_sms
-        data:
-          message: "This is a test message from Home Assistant"
-          target: "+1234567890"
-          sender_id: "+1234567890"  # Your GoTo phone number in E.164 format
-```
-
-## Configuration Options
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| client_id | string | Yes | Your GoTo Connect OAuth2 Client ID |
-| client_secret | string | Yes | Your GoTo Connect OAuth2 Client Secret |
-
-## Service Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| message | string | Yes | The SMS message to send (supports templates) |
-| target | string | Yes | Phone number with country code (e.g., "+1234567890") |
-| sender_id | string | Yes | GoTo phone number in E.164 format to send from (e.g., "+1234567890") |
-| data | object | No | Optional data for template rendering |
-
-## Template Features
-
-### Supported Template Functions
-
-- **Entity States**: `{{ states('sensor.temperature') }}`
-- **Time Functions**: `{{ now().strftime('%H:%M') }}`
-- **Conditional Logic**: `{% if states('binary_sensor.motion') == 'on' %}Motion detected{% else %}No motion{% endif %}`
-- **Custom Data**: `{{ data.location }}` (when using the `data` parameter)
-
-### Template Examples
-
-#### Time-based Messages
-
-```yaml
-message: "Alert at {{ now().strftime('%H:%M on %Y-%m-%d') }}"
-```
-
-#### Sensor Data
-
-```yaml
-message: "Temperature: {{ states('sensor.living_room_temperature') }}°F"
-```
-
-#### Conditional Messages
-
-```yaml
-message: "{% if states('binary_sensor.motion') == 'on' %}Motion detected{% else %}No motion{% endif %}"
-```
-
-#### Multi-line Status
-
-```yaml
-message: |
-  Home Status:
-  - Temperature: {{ states('sensor.temperature') }}°F
-  - Motion: {{ states('binary_sensor.motion') }}
-  - Time: {{ now().strftime('%H:%M') }}
-```
-
-## Token Storage
-
-The integration stores OAuth2 tokens securely within the Home Assistant config entry system. The tokens are automatically refreshed when they expire and are managed by the integration.
+- **Admin only.** `call_tts` dials real phones, so a call made by a non-admin Home Assistant user is
+  rejected. Automations and scripts started without a user are fine.
+- A message with a template must render cleanly; unlike SMS, a failure is an error rather than
+  reading template syntax aloud.
+- The caller ID is your GoTo account's default for the SIP device; it cannot be set per call.
 
 ## Troubleshooting
 
-### Common Issues
+- **Reauthenticate prompt / authentication errors:** GoTo rejected the tokens or the OAuth client.
+  Follow the prompt on **Devices & Services**, and check the client ID/secret under
+  **Settings > Devices & Services > Application Credentials**.
+- **Reauth fails with a redirect error (upgraders from v1):** v1 used a placeholder redirect URI
+  (`https://home-assistant.io/auth/callback`), so your GoTo OAuth client probably still has only
+  that one registered. Day-to-day operation never needs the redirect (your migrated tokens refresh
+  without it), but the first reauth does: add `https://my.home-assistant.io/redirect/oauth` to the
+  client in the GoTo Developer Portal (see Setup above). The old entry can stay.
+- **SMS not delivered:** use E.164 numbers (`+` and country code) and a `sender_id` that is a GoTo
+  number on your account with SMS enabled. Sender and target must differ.
+- **Voicemail counts as answered.** If the callee declines or is unavailable and the call rolls to
+  voicemail, GoTo picks up, so `answered` is `true`. Read it as "the call connected", not "a person
+  heard it".
+- **Caller ID** is the GoTo default for the SIP device; change it in GoTo Admin.
+- **"Voice calls are not configured":** add SIP details under the integration's **Configure**.
+- **"GoTo rejected the SIP credentials":** re-check the username and password.
+- **Voice calls fail:** make sure the outbound proxy for your account is set.
+- **Debug logs:**
 
-1. **Authentication Failed:**
-   - Check your Client ID and Client Secret
-   - Ensure your OAuth2 application is properly configured
-   - Verify the redirect URI matches exactly
-   - Re-authentication: If tokens expire, the integration will automatically trigger re-authentication
-
-2. **SMS Not Sending:**
-   - Check the target phone number format (include country code)
-   - Verify your GoTo Connect account has SMS capabilities
-   - Check the Home Assistant logs for detailed error messages
-
-3. **Template Rendering Issues:**
-   - Check template syntax for errors
-   - Verify entity names exist
-   - Enable debug logging to see template rendering details
-
-4. **Token Refresh Issues:**
-   - The integration will automatically trigger re-authentication when tokens expire
-   - Check your internet connection
-   - Verify the GoTo Connect API endpoints are accessible
-
-### Re-authentication
-
-The integration now supports automatic re-authentication when tokens expire:
-
-1. **Automatic Detection**: The integration detects when tokens are expired or invalid
-2. **UI Re-authentication**: A re-authentication prompt will appear in your Home Assistant UI
-3. **Seamless Process**: Follow the OAuth flow again without losing your configuration
-4. **Preserved Settings**: Your existing configuration is maintained during re-authentication
-
-To manually trigger re-authentication:
-
-1. Go to Settings → Devices & Services
-2. Find your GoTo SMS integration
-3. Click the three dots (⋮) and select Reconfigure
-4. Follow the OAuth flow again
-
-### Logs
-
-Enable debug logging by adding to your `configuration.yaml`:
-
-```yaml
-logger:
-  default: info
-  logs:
-    custom_components.goto_sms: debug
-```
+  ```yaml
+  logger:
+    default: info
+    logs:
+      custom_components.goto_sms: debug
+      gotoconnect: debug
+  ```
 
 ## Development
 
-### File Structure
-
-```
-custom_components/goto_sms/
-├── __init__.py          # Integration initialization
-├── manifest.json        # Integration metadata
-├── const.py            # Constants and configuration
-├── oauth.py            # OAuth2 token management
-├── notify.py           # SMS notification service
-├── config_flow.py      # Configuration flow
-├── services.yaml       # Service definitions
-└── translations/
-    └── en/
-        └── config_flow.json # UI translations
+```bash
+python -m venv .venv && .venv/bin/pip install -r requirements_test.txt
+.venv/bin/python -m pytest
 ```
 
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For issues and questions:
-
-- [Create an issue](https://github.com/oneofthegeeks/ha-goto/issues) on GitHub
-- Check the [Home Assistant community forums](https://community.home-assistant.io/)
-- Review the logs for detailed error information
-
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Licensed under the [MIT License](LICENSE).

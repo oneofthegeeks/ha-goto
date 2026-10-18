@@ -1,17 +1,14 @@
 {
   "domain": "goto_sms",
   "name": "GoTo SMS",
-  "documentation": "https://github.com/oneofthegeeks/ha-goto",
-  "dependencies": [],
+  "after_dependencies": ["tts"],
   "codeowners": ["@oneofthegeeks"],
-  "requirements": [
-    "requests>=2.25.1",
-    "requests-oauthlib>=1.3.0"
-  ],
-  "iot_class": "cloud_polling",
-  "version": "1.3.10",
   "config_flow": true,
+  "dependencies": ["application_credentials"],
+  "documentation": "https://github.com/oneofthegeeks/ha-goto",
   "integration_type": "service",
-  "quality_scale": "platinum",
-  "homeassistant": "2023.8.0"
-} 
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/oneofthegeeks/ha-goto/issues",
+  "requirements": ["gotoconnect==0.1.0"],
+  "version": "2.0.0"
+}

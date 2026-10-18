@@ -1,0 +1,114 @@
+{
+  "config": {
+    "step": {
+      "pick_implementation": {
+        "title": "Pick authentication method"
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate integration",
+        "description": "GoTo SMS needs you to sign in to GoTo again."
+      }
+    },
+    "abort": {
+      "already_configured": "Account is already configured",
+      "missing_credentials": "Application credentials are missing. Add your GoTo OAuth client under Application Credentials first.",
+      "authorize_url_timeout": "Timeout generating authorize URL.",
+      "missing_configuration": "The component is not configured. Please follow the documentation.",
+      "no_url_available": "No URL available. For information about this error, [check the help section]({docs_url})",
+      "oauth_error": "Received invalid token data.",
+      "oauth_failed": "Error while obtaining access token.",
+      "oauth_timeout": "Timeout resolving OAuth token.",
+      "oauth_unauthorized": "OAuth authorization error while obtaining access token.",
+      "unique_id_mismatch": "This GoTo account does not match the one being reauthenticated.",
+      "reauth_successful": "Re-authentication was successful",
+      "user_rejected_authorize": "Account linking rejected: {error}"
+    },
+    "create_entry": {
+      "default": "Successfully authenticated"
+    }
+  },
+  "application_credentials": {
+    "description": "Create an OAuth client in the GoTo Developer Portal with the redirect URI `{redirect_url}` and the `messaging.v1.send` scope, then enter its client ID and secret here."
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Voice calls (optional)",
+        "description": "Needed only for goto_sms.call_tts. Find these in GoTo Admin > Devices > Add Device > SIP Device. Leave everything blank to turn voice off.",
+        "data": {
+          "sip_username": "SIP username",
+          "sip_password": "SIP password",
+          "sip_server": "SIP server (registrar)",
+          "sip_proxy": "Outbound proxy"
+        },
+        "data_description": {
+          "sip_server": "Usually reg.jiveip.net (shown as the SIP server/registrar on the device page).",
+          "sip_proxy": "Account-specific, e.g. youraccount.jive.rtcfront.net. Required for most accounts; shown as the outbound proxy on the device page.",
+          "sip_password": "Leave blank to keep the current password."
+        }
+      }
+    },
+    "error": {
+      "sip_incomplete": "Enter both the SIP username and password, or leave both blank to turn voice off."
+    }
+  },
+  "exceptions": {
+    "sip_not_configured": {
+      "message": "Voice calls are not configured; add SIP details in the integration options."
+    }
+  },
+  "services": {
+    "send_sms": {
+      "name": "Send SMS",
+      "description": "Send an SMS via GoTo Connect (supports templates).",
+      "fields": {
+        "message": {
+          "name": "Message",
+          "description": "The SMS message to send (supports templates)."
+        },
+        "target": {
+          "name": "Target phone number",
+          "description": "The phone number to send the SMS to (with country code)."
+        },
+        "sender_id": {
+          "name": "Sender phone number",
+          "description": "The GoTo phone number to send the SMS from (with country code)."
+        },
+        "data": {
+          "name": "Template data",
+          "description": "Optional data for template rendering."
+        }
+      }
+    },
+    "call_tts": {
+      "name": "Call with text-to-speech",
+      "description": "Place a phone call through GoTo SIP and read the message aloud. Requires SIP details in the integration options.",
+      "fields": {
+        "target": {
+          "name": "Phone number",
+          "description": "Number to call (with country code)."
+        },
+        "message": {
+          "name": "Message",
+          "description": "Text to speak (supports templates)."
+        },
+        "tts_engine": {
+          "name": "TTS engine",
+          "description": "Text-to-speech engine; defaults to the default engine."
+        },
+        "language": {
+          "name": "Language",
+          "description": "Language code for the engine, e.g. en-US."
+        },
+        "repeat": {
+          "name": "Repeat",
+          "description": "Times to play the message (1-3)."
+        },
+        "ring_timeout": {
+          "name": "Ring timeout",
+          "description": "Seconds to wait for an answer (5-60)."
+        }
+      }
+    }
+  }
+}

@@ -1,23 +1,11 @@
 """Constants for the GoTo SMS integration."""
 
 DOMAIN = "goto_sms"
-DEFAULT_NAME = "GoTo SMS"
 
 # OAuth2 Configuration
 OAUTH2_AUTHORIZE_URL = "https://authentication.logmeininc.com/oauth/authorize"
 OAUTH2_TOKEN_URL = "https://authentication.logmeininc.com/oauth/token"
-OAUTH2_SCOPE = "messaging.v1.send"
-
-# GoTo Connect API Endpoints
-GOTO_API_BASE_URL = "https://api.goto.com"
-SMS_ENDPOINT = "/messaging/v1/messages"
-
-# Configuration keys
-CONF_CLIENT_ID = "client_id"
-CONF_CLIENT_SECRET = "client_secret"
-CONF_ACCESS_TOKEN = "access_token"
-CONF_REFRESH_TOKEN = "refresh_token"
-CONF_TOKEN_EXPIRES_AT = "token_expires_at"
+OAUTH_SCOPES = ["messaging.v1.send"]
 
 # Service configuration
 SERVICE_SEND_SMS = "send_sms"
@@ -26,5 +14,14 @@ ATTR_TARGET = "target"
 ATTR_SENDER_ID = "sender_id"
 ATTR_TEMPLATE_DATA = "data"
 
-# Default values
-# Note: sender_id is required and must be a valid GoTo phone number in E.164 format
+# Voice (optional SIP options on the config entry)
+SERVICE_CALL_TTS = "call_tts"
+ATTR_TTS_ENGINE = "tts_engine"
+ATTR_LANGUAGE = "language"
+ATTR_REPEAT = "repeat"
+ATTR_RING_TIMEOUT = "ring_timeout"
+CONF_SIP_USERNAME = "sip_username"
+CONF_SIP_PASSWORD = "sip_password"
+CONF_SIP_SERVER = "sip_server"
+CONF_SIP_PROXY = "sip_proxy"
+DEFAULT_SIP_SERVER = "reg.jiveip.net"

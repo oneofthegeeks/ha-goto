@@ -1,35 +1,62 @@
 send_sms:
-  name: "Send SMS"
-  description: "Send SMS messages via GoTo Connect API with template support"
   fields:
     message:
-      name: "Message"
-      description: "The SMS message to send (supports templates)"
       required: true
       example: "Temperature is {{ states('sensor.living_room_temperature') }}°F"
       selector:
         text:
           multiline: true
     target:
-      name: "Target Phone Number"
-      description: "The phone number to send the SMS to (with country code)"
       required: true
       example: "+1234567890"
       selector:
         text:
-          pattern: "^\\+[1-9]\\d{1,14}$"
     sender_id:
-      name: "Sender Phone Number"
-      description: "The GoTo phone number to send the SMS from (with country code)"
       required: true
       example: "+1234567890"
       selector:
         text:
-          pattern: "^\\+[1-9]\\d{1,14}$"
     data:
-      name: "Template Data"
-      description: "Optional data for template rendering"
       required: false
       example: '{"name": "John", "location": "kitchen"}'
       selector:
-        object: 
+        object:
+call_tts:
+  fields:
+    target:
+      required: true
+      example: "+1234567890"
+      selector:
+        text:
+    message:
+      required: true
+      example: "The front door has been open for {{ states('sensor.door_open_minutes') }} minutes"
+      selector:
+        text:
+          multiline: true
+    tts_engine:
+      required: false
+      selector:
+        text:
+    language:
+      required: false
+      example: "en-US"
+      selector:
+        text:
+    repeat:
+      required: false
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 3
+          mode: box
+    ring_timeout:
+      required: false
+      default: 25
+      selector:
+        number:
+          min: 5
+          max: 60
+          unit_of_measurement: s
+          mode: box
