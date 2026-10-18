@@ -5,6 +5,12 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-10-18
+
+### Changed
+
+- The API library was renamed `gotoconnect` -> `aiogotoconnect` (0.2.0); no functional changes.
+
 ## [2.0.0] - 2026-10-18
 
 ### Changed

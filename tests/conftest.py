@@ -22,7 +22,7 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 
 @pytest.fixture
 def messaging():
-    """Patch the gotoconnect client at the integration boundary."""
+    """Patch the aiogotoconnect client at the integration boundary."""
     client = MagicMock()
     client.async_send_sms = AsyncMock(return_value={"id": "msg-1"})
     with patch("custom_components.goto_sms.GoToMessaging", return_value=client) as cls:

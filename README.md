@@ -121,7 +121,7 @@ should prefer `goto_sms.send_sms`.
 ## Voice calls (optional)
 
 `goto_sms.call_tts` renders your message with a Home Assistant text-to-speech engine and calls the
-number over SIP using the [`gotoconnect`](https://pypi.org/project/gotoconnect/) library. GoTo has no
+number over SIP using the [`aiogotoconnect`](https://pypi.org/project/aiogotoconnect/) library. GoTo has no
 REST call API, so this needs a SIP device on your account. SMS-only users can skip this section.
 
 ### SIP setup
@@ -200,7 +200,7 @@ Notes:
     default: info
     logs:
       custom_components.goto_sms: debug
-      gotoconnect: debug
+      aiogotoconnect: debug
   ```
 
 ## Development

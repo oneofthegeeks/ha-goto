@@ -2,7 +2,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from gotoconnect import CallResult, GoToAuthError, GoToCallError, GoToSipError
+from aiogotoconnect import CallResult, GoToAuthError, GoToCallError, GoToSipError
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 

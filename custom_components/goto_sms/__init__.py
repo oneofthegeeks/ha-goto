@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass
 
 from aiohttp import ClientError, ClientResponseError
-from gotoconnect import GoToAuthError, GoToError, GoToMessaging
+from aiogotoconnect import GoToAuthError, GoToError, GoToMessaging
 from homeassistant.components.notify.legacy import NOTIFY_SERVICES
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
@@ -64,7 +64,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GoToConfigEntry) -> bool
     session = OAuth2Session(hass, entry, implementation)
 
     async def _token() -> str:
-        """Token provider for gotoconnect; maps refresh failures to its errors."""
+        """Token provider for aiogotoconnect; maps refresh failures to its errors."""
         try:
             await session.async_ensure_token_valid()
         except ClientResponseError as err:

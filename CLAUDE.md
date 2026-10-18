@@ -1,6 +1,6 @@
 # ha-goto
 
-Live: v2.0.0 (2026-10-18) - v2 rewrite on the gotoconnect lib: app-credentials OAuth (zero re-auth migration), SMS + admin-only call_tts voice. Validated live on Taylor's HA (2026.10.2).
+Live: v2.0.1 (2026-10-18) - v2 rewrite on the aiogotoconnect lib (0.2.0; renamed from gotoconnect): app-credentials OAuth (zero re-auth migration), SMS + admin-only call_tts voice. Validated live on Taylor's HA (2026.10.2).
 
 ## What This Is
 Home Assistant custom integration (domain `goto_sms`) that sends SMS via GoTo Connect and, optionally, places TTS phone calls over SIP. Used by Taylor in production (v1.3.10) and published via HACS.
@@ -8,7 +8,7 @@ Home Assistant custom integration (domain `goto_sms`) that sends SMS via GoTo Co
 ## Stack
 - Python, Home Assistant custom integration (min HA 2025.1.0, see `hacs.json`); config-entry only.
 - Auth: HA Application Credentials + OAuth2 (`GoToBasicAuthImplementation`), scope `messaging.v1.send`.
-- SMS and voice via the `gotoconnect==0.1.0` PyPI lib (async; `GoToMessaging`, `GoToVoice`).
+- SMS and voice via the `aiogotoconnect==0.1.0` PyPI lib (async; `GoToMessaging`, `GoToVoice`).
 - Tests: pytest + pytest-homeassistant-custom-component.
 
 ## Local Development

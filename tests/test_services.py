@@ -1,6 +1,6 @@
 """goto_sms.send_sms behaviour (v1-compatible call shape)."""
 import pytest
-from gotoconnect import GoToApiError, GoToAuthError, GoToError
+from aiogotoconnect import GoToApiError, GoToAuthError, GoToError
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 

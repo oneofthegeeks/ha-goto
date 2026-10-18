@@ -6,7 +6,7 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-from gotoconnect import (
+from aiogotoconnect import (
     GoToApiError,
     GoToAuthError,
     GoToCallError,
