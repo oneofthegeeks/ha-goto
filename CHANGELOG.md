@@ -5,6 +5,12 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2026-10-18
+
+### Changed
+
+- `call_tts` polish via `aiogotoconnect` 0.3.1: audio starts the moment the call is answered (encoding now happens while the phone rings), and the final word is no longer clipped (trailing silence drains the jitter buffer before hangup).
+
 ## [2.0.2] - 2026-10-18
 
 ### Changed
