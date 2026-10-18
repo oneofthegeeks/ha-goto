@@ -54,8 +54,16 @@ In the [GoTo Developer Portal](https://developer.goto.com/) create an OAuth clie
 - **Redirect URI:** `https://my.home-assistant.io/redirect/oauth`
 - **Scope:** `messaging.v1.send`
 
-Note the client ID and client secret. (If your Home Assistant does not load the `my` integration -
-it is part of `default_config` - register `<your HA base URL>/auth/external/callback` instead.)
+Note the client ID and client secret.
+
+Tip: GoTo allows multiple redirect URIs - registering both of these covers every Home
+Assistant configuration, now and later:
+
+- `https://my.home-assistant.io/redirect/oauth` - used whenever the `my` integration is
+  loaded (it is part of `default_config`). It is a static relay page that bounces your
+  browser straight back to your own instance; no tokens pass through it.
+- `<your HA base URL>/auth/external/callback` (e.g. `https://ha.example.com/auth/external/callback`) -
+  used instead when the `my` integration is disabled; fully self-contained.
 
 ### 2. Add the integration
 
@@ -171,6 +179,11 @@ Notes:
 - **Reauthenticate prompt / authentication errors:** GoTo rejected the tokens or the OAuth client.
   Follow the prompt on **Devices & Services**, and check the client ID/secret under
   **Settings > Devices & Services > Application Credentials**.
+- **Reauth fails with a redirect error (upgraders from v1):** v1 used a placeholder redirect URI
+  (`https://home-assistant.io/auth/callback`), so your GoTo OAuth client probably still has only
+  that one registered. Day-to-day operation never needs the redirect (your migrated tokens refresh
+  without it), but the first reauth does: add `https://my.home-assistant.io/redirect/oauth` to the
+  client in the GoTo Developer Portal (see Setup above). The old entry can stay.
 - **SMS not delivered:** use E.164 numbers (`+` and country code) and a `sender_id` that is a GoTo
   number on your account with SMS enabled. Sender and target must differ.
 - **Voicemail counts as answered.** If the callee declines or is unavailable and the call rolls to
