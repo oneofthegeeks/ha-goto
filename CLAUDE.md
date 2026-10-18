@@ -22,7 +22,7 @@ No running HA needed; copy `custom_components/goto_sms` into a HA config dir to 
 `.venv/bin/python -m pytest` (61 tests). CI (`.github/workflows/ci.yml`, push/PR on main + v2): pytest, hassfest, HACS action.
 
 ## Deployment
-HACS custom repo. Release = `git tag vX.Y.Z` + GitHub release on `main`. **Never tag or touch `main` from v2 work until Taylor has validated v2 live**; he runs v1.3.10 daily. HACS default-store submission comes after v2.0.0 ships. Entity-based notify and the `goto_connect` domain rename are deferred to the core-submission plan.
+HACS custom repo (default-store submission pending: hacs/default PR #12130). **Main is PR-only** (ruleset: required checks pytest floor/latest + hassfest + hacs, no force-push) — work lands via PRs that Taylor merges. Release = `git tag vX.Y.Z` (admin-only via tag ruleset) + GitHub release on `main`; Taylor is the only releaser. Entity-based notify and the `goto_connect` domain rename are deferred to the core-submission plan.
 
 ## Key Files
 `custom_components/goto_sms/`:
