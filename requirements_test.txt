@@ -1,4 +1,4 @@
 pytest-homeassistant-custom-component
-aiogotoconnect==0.2.0
+aiogotoconnect==0.3.0
 mutagen
 ha-ffmpeg
