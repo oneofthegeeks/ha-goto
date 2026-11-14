@@ -105,6 +105,21 @@ def _render(
         return message
 
 
+def _api_error_text(err: GoToApiError) -> str:
+    """'GoTo API error (HTTP 403): UNAUTHORIZED - Forbidden access to phone number +1…'.
+
+    GoTo's errorCode/message (aiogotoconnect >= 0.3.2) say *why* a send was refused,
+    e.g. the signed-in user lost SMS rights on the sender number; the status alone does not.
+    """
+    text = f"GoTo API error (HTTP {err.status})"
+    reason = " - ".join(part for part in (err.error_code, err.detail) if part)
+    if reason:
+        text += f": {reason}"
+    if err.reference:
+        text += f" [GoTo ref {err.reference}]"
+    return text
+
+
 async def async_send_sms(
     hass: HomeAssistant,
     message: str,
@@ -135,7 +150,7 @@ async def async_send_sms(
         entry.async_start_reauth(hass)
         raise HomeAssistantError("GoTo rejected the credentials; reauthenticate") from err
     except GoToApiError as err:
-        raise HomeAssistantError(f"GoTo API error (HTTP {err.status})") from err
+        raise HomeAssistantError(_api_error_text(err)) from err
     except GoToError as err:
         raise HomeAssistantError(f"Sending SMS failed: {err}") from err
 
