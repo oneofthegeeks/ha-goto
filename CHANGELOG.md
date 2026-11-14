@@ -5,6 +5,12 @@ All notable changes to the GoTo SMS Home Assistant integration will be documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - Unreleased
+
+### Changed
+
+- SMS failures now say why. The error raised by `goto_sms.send_sms` (and logged by the calling automation) includes GoTo's own error code, message and support reference, e.g. `GoTo API error (HTTP 403): UNAUTHORIZED - Forbidden access to phone number +1… [GoTo ref …]`, instead of a bare `HTTP 403`. Requires `aiogotoconnect` 0.3.2.
+
 ## [2.0.3] - 2026-10-18
 
 ### Changed

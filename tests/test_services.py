@@ -76,6 +76,22 @@ async def test_api_error_includes_status(hass: HomeAssistant, setup_entry, messa
         await send(hass)
 
 
+async def test_api_error_includes_goto_reason(hass: HomeAssistant, setup_entry, messaging) -> None:
+    messaging.async_send_sms.side_effect = GoToApiError(
+        "SMS send failed with HTTP 403",
+        403,
+        error_code="UNAUTHORIZED",
+        detail="Forbidden access to phone number +15550001111",
+        reference="REF123",
+    )
+    with pytest.raises(HomeAssistantError) as caught:
+        await send(hass)
+    assert str(caught.value) == (
+        "GoTo API error (HTTP 403): UNAUTHORIZED - Forbidden access to phone number "
+        "+15550001111 [GoTo ref REF123]"
+    )
+
+
 async def test_generic_error(hass: HomeAssistant, setup_entry, messaging) -> None:
     messaging.async_send_sms.side_effect = GoToError("boom")
     with pytest.raises(HomeAssistantError):
