@@ -23,6 +23,7 @@ No running HA needed; copy `custom_components/goto_sms` into a HA config dir to 
 
 ## Deployment
 HACS custom repo (default-store submission pending: hacs/default PR #12130). **Main is PR-only** (ruleset: required checks pytest floor/latest + hassfest + hacs, no force-push) — work lands via PRs that Taylor merges. Release = `git tag vX.Y.Z` (admin-only via tag ruleset) + GitHub release on `main`; Taylor is the only releaser. Entity-based notify and the `goto_connect` domain rename are deferred to the core-submission plan.
+Secrets (SIP device + OAuth client for live smoke tests): Infisical `home` project, folder `/aiogotoconnect` (prod); pulled ad hoc, nothing is rendered.
 
 ## Key Files
 `custom_components/goto_sms/`:
